@@ -50,17 +50,6 @@ public interface Cache<K, V> {
     Map<K, V> getAll(List<K> keys);
 
     /**
-     * look up a CacheEntry in the cache. The CacheEntry may correspond to
-     * expired data. This method can be used to revalidate cached objects whose
-     * expiration times have passed
-     *
-     * @param key key corresponding to value
-     * @return value corresponding to key (may be expired), null if key is not
-     * in cache
-     */
-    CacheEntry<V> getCacheEntry(K key);
-
-    /**
      * get cache statistics
      *
      * @return data structure containing statistics
