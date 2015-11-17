@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package tests;
 
@@ -17,7 +17,6 @@ import java.util.Map;
 
 /**
  * @author ArunIyengar
- * 
  */
 public class CacheTests {
 
@@ -106,7 +105,7 @@ public class CacheTests {
         val1 = spc.get(key1);
         assertEquals("Val1 should be 44, actual value is " + val1, 44, val1.intValue());
     }
- 
+
     public void testExpiration(CacheWithLifetimes<String, Integer> spc) {
         long lifespan = 1000;
         Integer val1;
@@ -119,11 +118,10 @@ public class CacheTests {
         assertNotNull("Val1 should not be null, value is " + val1, val1);
         try {
             Thread.sleep(lifespan + 200);
+        } catch (Exception e) {
         }
-        catch (Exception e) {
-        } 
         val1 = spc.get(key1);
         assertNull("Val1 should be null, value is " + val1, val1);
     }
-    
+
 }

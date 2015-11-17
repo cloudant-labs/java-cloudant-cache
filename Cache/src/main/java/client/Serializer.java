@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package client;
 
@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 
 /**
  * @author ArunIyengar
- *
  */
 public class Serializer {
 
@@ -26,7 +25,8 @@ public class Serializer {
             out.writeObject(r);
             bytes = bos.toByteArray();
         } catch (IOException ex) {
-            System.out.println("Exception in Serializer.serializeToByteArray  " + ",  " + ex.getMessage() + " "
+            System.out.println("Exception in Serializer.serializeToByteArray  " + ",  " + ex
+                    .getMessage() + " "
                     + ex.getStackTrace());
         } finally {
             try {
@@ -54,7 +54,8 @@ public class Serializer {
             in = new ObjectInputStream(bis);
             r = (T) in.readObject();
         } catch (IOException i) {
-            System.out.println("Exception in Serializer.deserializeFromByteArray  " + ",  " + i.getMessage());
+            System.out.println("Exception in Serializer.deserializeFromByteArray  " + ",  " + i
+                    .getMessage());
             i.printStackTrace();
             return null;
         } catch (ClassNotFoundException c) {
@@ -79,5 +80,5 @@ public class Serializer {
         return r;
     }
 
-    
+
 }

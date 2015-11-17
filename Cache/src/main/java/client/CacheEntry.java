@@ -1,13 +1,12 @@
 /**
- * 
+ *
  */
 package client;
 
 import java.io.Serializable;
 
 /**
- * @author ArunIyengar 
- * 
+ * @author ArunIyengar
  */
 
 /*
@@ -33,10 +32,11 @@ public class CacheEntry<V> implements Serializable {
     }
 
     public String toString() {
-        return ("CacheEntry value: " + value + 
+        return ("CacheEntry value: " + value +
                 "\nCacheEntry expiration time: " + expirationTime +
                 "\nMilliseconds until expiration: " + (expirationTime - Util.getTime()));
     }
+
     public void print() {
         System.out.println(toString());
     }

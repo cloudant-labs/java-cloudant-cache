@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package client;
 
@@ -7,7 +7,6 @@ import com.google.common.cache.CacheStats;
 
 /**
  * @author ArunIyengar
- * 
  */
 public class InProcessCacheStats implements Stats {
     private CacheStats cacheStats;

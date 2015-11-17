@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package tests;
 
@@ -10,7 +10,6 @@ import client.InProcessCache;
 
 /**
  * @author ArunIyengar
- * 
  */
 public class InProcessCacheTests {
 
@@ -20,7 +19,7 @@ public class InProcessCacheTests {
             numObjects, defaultExpiration);
     CacheTests cacheTests = new CacheTests();
 
-    
+
     @Test
     public void testPutGetGetStatistics() {
         cacheTests.testPutGetGetStatistics(spc, true);
@@ -50,10 +49,10 @@ public class InProcessCacheTests {
     public void testUpdate() {
         cacheTests.testUpdate(spc);
     }
- 
+
     @Test
     public void testExpiration() {
         cacheTests.testExpiration(spc);
     }
-    
+
 }

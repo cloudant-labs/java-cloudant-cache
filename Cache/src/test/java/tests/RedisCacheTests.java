@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package tests;
 
@@ -12,16 +12,15 @@ import client.Util;
 
 /**
  * @author ArunIyengar
- *
  */
 public class RedisCacheTests {
 
     long defaultExpiration = 6000;
     RedisCache<String, Integer> opc = new RedisCache<String, Integer>
-        ("localhost", 6379, 60, defaultExpiration);
+            ("localhost", 6379, 60, defaultExpiration);
     CacheTests cacheTests = new CacheTests();
 
-    
+
     @Test
     public void testPutGetGetStatistics() {
         cacheTests.testPutGetGetStatistics(opc, false);
@@ -41,7 +40,7 @@ public class RedisCacheTests {
     public void testPutAll() {
         cacheTests.testPutAll(opc);
     }
-    
+
     @Test
     public void testGetAll() {
         cacheTests.testGetAll(opc);
@@ -51,7 +50,7 @@ public class RedisCacheTests {
     public void testUpdate() {
         cacheTests.testUpdate(opc);
     }
- 
+
     @Test
     public void testExpiration() {
         cacheTests.testExpiration(opc);

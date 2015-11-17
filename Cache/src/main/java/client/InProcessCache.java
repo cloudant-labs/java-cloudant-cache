@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package client;
 
@@ -12,8 +12,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 /**
- * @author ArunIyengar 
- * 
+ * @author ArunIyengar
  */
 
 /*
@@ -26,14 +25,11 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * Constructor
-     * 
-     * @param maxObjects
-     *            maximum number of objects which can be stored before
-     *            replacement starts
-     * @param defaultLifespan
-     *            Default life time in milliseconds for cached objects
-     * 
-     * */
+     *
+     * @param maxObjects      maximum number of objects which can be stored before
+     *                        replacement starts
+     * @param defaultLifespan Default life time in milliseconds for cached objects
+     */
     public InProcessCache(long maxObjects, long defaultLifespan) {
         cache = CacheBuilder.newBuilder().maximumSize(maxObjects)
                 .build(new CacheLoader<K, CacheEntry<V>>() {
@@ -47,8 +43,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * delete all key-value pairs from the cache
-     * 
-     * */
+     */
     @Override
     public void clear() {
         cache.invalidateAll();
@@ -56,11 +51,9 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * delete a key-value pair from the cache
-     * 
-     * @param key
-     *            key corresponding to value
-     * 
-     * */
+     *
+     * @param key key corresponding to value
+     */
     @Override
     public void delete(K key) {
         cache.invalidate(key);
@@ -68,11 +61,9 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * delete one or more key-value pairs from the cache
-     * 
-     * @param keys
-     *            iterable data structure containing the keys to delete
-     * 
-     * */
+     *
+     * @param keys iterable data structure containing the keys to delete
+     */
     @Override
     public void deleteAll(List<K> keys) {
         cache.invalidateAll(keys);
@@ -80,13 +71,11 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * look up a value in the cache
-     * 
-     * @param key
-     *            key corresponding to value
+     *
+     * @param key key corresponding to value
      * @return value corresponding to key, null if key is not in cache or if
-     *         value is expired
-     * 
-     * */
+     * value is expired
+     */
     @Override
     public V get(K key) {
         CacheEntry<V> cacheEntry = cache.getIfPresent(key);
@@ -101,13 +90,11 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * look up one or more values in the cache. Don't return expired values.
-     * 
-     * @param keys
-     *            iterable data structure containing the keys to look up
+     *
+     * @param keys iterable data structure containing the keys to look up
      * @return map containing key-value pairs corresponding to unexpired data in
-     *         the cache
-     * 
-     * */
+     * the cache
+     */
     @Override
     public Map<K, V> getAll(List<K> keys) {
         Map<K, CacheEntry<V>> cacheMap = cache.getAllPresent(keys);
@@ -127,13 +114,11 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      * look up a CacheEntry in the cache. The CacheEntry may correspond to
      * expired data. This method can be used to revalidate cached objects whose
      * expiration times have passed
-     * 
-     * @param key
-     *            key corresponding to value
+     *
+     * @param key key corresponding to value
      * @return value corresponding to key (may be expired), null if key is not
-     *         in cache
-     * 
-     * */
+     * in cache
+     */
     @Override
     public CacheEntry<V> getCacheEntry(K key) {
         return cache.getIfPresent(key);
@@ -141,10 +126,9 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * get cache statistics
-     * 
+     *
      * @return data structure containing statistics
-     * 
-     * */
+     */
     @Override
     public InProcessCacheStats getStatistics() {
         return new InProcessCacheStats(cache.stats());
@@ -153,20 +137,17 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * Return string representing a cache entry corresponding to a key (or indicate if the
-     * key is not in the cache). 
-     * 
-     * @param key
-     *            key corresponding to value
+     * key is not in the cache).
+     *
+     * @param key key corresponding to value
      * @return string containing output
-     * 
-     * */ 
+     */
     public String printCacheEntry(K key) {
         String result = "printCacheEntry: CacheEntry value for key: " + key + "\n";
         CacheEntry<V> cacheEntry = cache.getIfPresent(key);
         if (cacheEntry == null) {
             result = result + "Key " + key + " not in cache\n";
-        }
-        else {
+        } else {
             result = result + cacheEntry.toString();
         }
         return result;
@@ -174,29 +155,22 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * cache a key-value pair
-     * 
-     * @param key
-     *            key associated with value
-     * @param value
-     *            value associated with key
-     * 
-     * */
+     *
+     * @param key   key associated with value
+     * @param value value associated with key
+     */
     @Override
     public void put(K key, V value) {
-        put (key, value, defaultLifetime);
+        put(key, value, defaultLifetime);
     }
-    
+
     /**
      * cache a key-value pair
-     * 
-     * @param key
-     *            key associated with value
-     * @param value
-     *            value associated with key
-     * @param lifetime
-     *            lifetime in milliseconds associated with data
-     * 
-     * */
+     *
+     * @param key      key associated with value
+     * @param value    value associated with key
+     * @param lifetime lifetime in milliseconds associated with data
+     */
     @Override
     public void put(K key, V value, long lifetime) {
         CacheEntry<V> cacheEntry = new CacheEntry<V>(value, lifetime
@@ -206,31 +180,23 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * cache one or more key-value pairs
-     * 
-     * @param map
-     *            map containing key-value pairs to cache
-     * @param value
-     *            value associated with each key-value pair
-     * @param lifetime
-     *            lifetime in milliseconds associated with each key-value pair
-     * 
-     * */
+     *
+     * @param map      map containing key-value pairs to cache
+     * @param value    value associated with each key-value pair
+     * @param lifetime lifetime in milliseconds associated with each key-value pair
+     */
     @Override
     public void putAll(Map<K, V> map) {
-        putAll (map, defaultLifetime);
+        putAll(map, defaultLifetime);
     }
-    
+
     /**
      * cache one or more key-value pairs
-     * 
-     * @param map
-     *            map containing key-value pairs to cache
-     * @param value
-     *            value associated with each key-value pair
-     * @param lifetime
-     *            lifetime in milliseconds associated with each key-value pair
-     * 
-     * */
+     *
+     * @param map      map containing key-value pairs to cache
+     * @param value    value associated with each key-value pair
+     * @param lifetime lifetime in milliseconds associated with each key-value pair
+     */
     @Override
     public void putAll(Map<K, V> map, long lifetime) {
         long expirationTime = Util.getTime() + lifetime;
@@ -244,8 +210,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * Return number of objects in cache
-     * 
-     * */
+     */
     @Override
     public long size() {
         return cache.size();
@@ -253,10 +218,9 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
     /**
      * Return contents of entire cache in a string
-     * 
+     *
      * @return string containing output
-     * 
-     * */
+     */
     public String toString() {
         Map<K, CacheEntry<V>> cacheMap = cache.asMap();
         String result = "\nContents of Entire Cache\n\n";
@@ -265,8 +229,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
             CacheEntry<V> cacheEntry = entry.getValue();
             if (cacheEntry == null) {
                 result = result + "CacheEntry is null\n";
-            }
-            else {
+            } else {
                 result = result + cacheEntry.toString();
             }
             result = result + "\n\n";
