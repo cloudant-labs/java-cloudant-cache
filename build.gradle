@@ -107,8 +107,8 @@ subprojects {
                 //augment the pom with additional information
                 pom.project {
                     packaging 'jar'
-                    description 'Official Cloudant client for Java'
-                    inceptionYear '2014'
+                    description 'Cache for java-cloudant client'
+                    inceptionYear '2016'
                     url 'https://cloudant.com'
                     licenses {
                         license {
@@ -118,9 +118,9 @@ subprojects {
                         }
                     }
                     scm {
-                        connection 'scm:git:git://github.com/cloudant/java-cloudant.git'
-                        developerConnection 'scm:git:git@github.com/cloudant/java-cloudant.git'
-                        url 'https://java-cloudant@github.com/cloudant/java-cloudant.git'
+                        connection 'scm:git:git://github.com/cloudant/java-cloudant-cache.git'
+                        developerConnection 'scm:git:git@github.com/cloudant/java-cloudant-cache.git'
+                        url 'https://java-cloudant@github.com/cloudant/java-cloudant-cache.git'
                     }
                     properties {
                         'project.build.sourceEncoding' 'UTF-8'
