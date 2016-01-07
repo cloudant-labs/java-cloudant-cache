@@ -1,0 +1,5 @@
+dependencies {
+    compile project(':cache')
+    compile group: 'com.google.guava', name: 'guava', version: '18.0'
+    testCompile project(path: ':cache', configuration: 'testOutput')
+}

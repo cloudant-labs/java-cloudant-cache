@@ -1,0 +1,12 @@
+.project
+.settings
+.classpath
+target
+*.log
+*.log.*
+.idea/*
+!.idea/codeStyleSettings.xml
+*.iml
+build/
+.gradle/
+local.properties

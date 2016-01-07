@@ -1,0 +1,2 @@
+include ':in-process-cache', ':redis-cache', ':cache'
+rootProject.name = 'java-cloduant-cache'

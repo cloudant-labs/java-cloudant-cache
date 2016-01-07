@@ -1,0 +1,162 @@
+group = 'com.cloudant'
+version = '0.1-SNAPSHOT'
+description = """A Java object cache for use with the java-cloudant client"""
+
+// If the version says "snapshot" anywhere assume it is not a release
+ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'signing'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        compile group: 'com.cloudant', name: 'cloudant-client', version: 'latest.integration'
+        // Test dependencies
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+    }
+
+    // Include variable debug info in the compiled classes
+    compileJava.options.debugOptions.debugLevel = "source,lines,vars"
+// Fail on javac warnings
+    compileJava.options.compilerArgs << "-Werror"
+
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier = 'sources'
+        sourceSets.all {
+            into(name + "/java", { from allJava })
+            into(name + "/resources", { from resources })
+        }
+    }
+
+    javadoc {
+        options.setMemberLevel JavadocMemberLevel.PUBLIC
+        options.overview = "overview.html"
+        include("**/lightcouch/*Exception.java",
+                "**/client/api/**",
+                "**/http/*")
+        //add a logging listener to check for javadoc warnings and fail the build if there are any
+        boolean hasJavaDocWarnings = false;
+        doFirst {
+            getLogging().addStandardErrorListener(new StandardOutputListener() {
+                void onOutput(CharSequence output) {
+                    if (output =~ "warning:") {
+                        hasJavaDocWarnings = true
+                    }
+                }
+            })
+        }
+        doLast {
+            if (hasJavaDocWarnings) {
+                throw new GradleException("Build failed due to javadoc warnings.");
+            }
+        }
+    }
+
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    artifacts {
+        archives sourcesJar, javadocJar
+    }
+
+//load signing and repository parameters from system properties
+    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile', 'ossrhUsername', 'ossrhPassword']
+            .each { propName ->
+        //set a property with the given name if the system property is set
+        //if the system property is not set then set the property to null if it isn't a signing one
+        if (System.properties.(propName.toString()) != null || !propName.startsWith("signing")) {
+            ext.(propName.toString()) = System.properties.(propName.toString())
+        }
+    }
+
+    signing {
+        //only apply signing when it is a release and is being published
+        required {
+            isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives")
+        }
+        //when signing, sign the archives
+        sign configurations.archives
+    }
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+
+                //when publishing sign the pom
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                //augment the pom with additional information
+                pom.project {
+                    packaging 'jar'
+                    description 'Official Cloudant client for Java'
+                    inceptionYear '2014'
+                    url 'https://cloudant.com'
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    scm {
+                        connection 'scm:git:git://github.com/cloudant/java-cloudant.git'
+                        developerConnection 'scm:git:git@github.com/cloudant/java-cloudant.git'
+                        url 'https://java-cloudant@github.com/cloudant/java-cloudant.git'
+                    }
+                    properties {
+                        'project.build.sourceEncoding' 'UTF-8'
+                    }
+                    developers {
+                        developer {
+                            name 'IBM Cloudant'
+                            email 'support@cloudant.com'
+                            url 'https://cloudant.com'
+                            organization 'IBM'
+                            organizationUrl 'http://www.ibm.com'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    apply plugin: 'findbugs'
+//findbugs
+    findbugs {
+        toolVersion = "3.0.1"
+        //the code base is pretty small so use max effort
+        effort = "max"
+        //we don't want to run findbugs on the test code yet
+        //sourceSets = [sourceSets.main]
+        //exclude a couple of known bugs until we get the chance to fix them
+        //excludeFilter = file("findbugs_excludes.xml")
+    }
+
+    tasks.withType(FindBugs) {
+        //currently only one report type can be used toggle which with a property
+        boolean generateXML = Boolean.getBoolean("findbugs.xml.report")
+        reports {
+            xml.enabled = generateXML
+            html.enabled = !generateXML
+        }
+    }
+}
