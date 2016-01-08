@@ -196,8 +196,6 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      * cache one or more key-value pairs
      *
      * @param map      map containing key-value pairs to cache
-     * @param value    value associated with each key-value pair
-     * @param lifetime lifetime in milliseconds associated with each key-value pair
      */
     @Override
     public void putAll(Map<K, V> map) {
@@ -208,7 +206,6 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      * cache one or more key-value pairs
      *
      * @param map      map containing key-value pairs to cache
-     * @param value    value associated with each key-value pair
      * @param lifetime lifetime in milliseconds associated with each key-value pair
      */
     @Override
