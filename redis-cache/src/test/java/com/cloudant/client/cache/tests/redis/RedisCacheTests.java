@@ -1,14 +1,13 @@
 /**
  *
  */
-package tests;
+package com.cloudant.client.cache.tests.redis;
 
+
+import com.cloudant.client.cache.redis.RedisCache;
+import com.cloudant.client.cache.tests.CacheTests;
 
 import org.junit.Test;
-
-import client.RedisCache;
-import client.Serializer;
-import client.Util;
 
 /**
  * @author ArunIyengar

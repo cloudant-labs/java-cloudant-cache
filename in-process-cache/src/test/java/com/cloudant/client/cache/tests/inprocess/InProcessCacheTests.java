@@ -1,12 +1,13 @@
 /**
  *
  */
-package tests;
+package com.cloudant.client.cache.tests.inprocess;
 
+
+import com.cloudant.client.cache.inprocess.InProcessCache;
+import com.cloudant.client.cache.tests.CacheTests;
 
 import org.junit.Test;
-
-import client.InProcessCache;
 
 /**
  * @author ArunIyengar

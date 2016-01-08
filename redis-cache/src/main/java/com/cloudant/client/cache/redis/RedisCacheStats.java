@@ -1,7 +1,9 @@
 /**
  *
  */
-package client;
+package com.cloudant.client.cache.redis;
+
+import com.cloudant.client.cache.Stats;
 
 /**
  * @author ArunIyengar

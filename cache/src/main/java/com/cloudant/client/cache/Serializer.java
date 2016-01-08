@@ -1,7 +1,7 @@
 /**
  *
  */
-package client;
+package com.cloudant.client.cache;
 
 import java.io.ByteArrayOutputStream;
 import java.io.ByteArrayInputStream;

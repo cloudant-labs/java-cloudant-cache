@@ -1,15 +1,18 @@
 /**
  *
  */
-package client;
+package com.cloudant.client.cache.inprocess;
 
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.cloudant.client.cache.CacheEntry;
+import com.cloudant.client.cache.CacheWithLifetimes;
+import com.cloudant.client.cache.Util;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author ArunIyengar

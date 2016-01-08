@@ -1,17 +1,22 @@
 /**
  *
  */
-package client;
+package com.cloudant.client.cache.redis;
 
+
+import com.cloudant.client.cache.CacheEntry;
+import com.cloudant.client.cache.CacheWithLifetimes;
+import com.cloudant.client.cache.Serializer;
+import com.cloudant.client.cache.Util;
+
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import redis.clients.jedis.Jedis;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.springframework.data.redis.serializer.StringRedisSerializer;
-
-import redis.clients.jedis.Jedis;
 
 /**
  * @author ArunIyengar

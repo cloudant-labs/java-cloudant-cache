@@ -1,15 +1,15 @@
 /**
  *
  */
-package tests;
+package com.cloudant.client.cache.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import client.CacheWithLifetimes;
-import client.InProcessCacheStats;
-import client.Stats;
+import com.cloudant.client.cache.CacheWithLifetimes;
+import com.cloudant.client.cache.InProcessCacheStats;
+import com.cloudant.client.cache.Stats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
