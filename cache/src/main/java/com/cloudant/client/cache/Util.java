@@ -16,6 +16,7 @@ package com.cloudant.client.cache;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -39,20 +40,10 @@ public class Util {
      */
     public static byte[] compress(Serializable object) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-            GZIPOutputStream gzipOut = null;
-            ObjectOutputStream objectOut = null;
-            try {
-                gzipOut = new GZIPOutputStream(baos);
-                objectOut = new ObjectOutputStream(gzipOut);
-                objectOut.writeObject(object);
-            } catch (Exception e) {
-                describeException(e, "Exception in Util.compress");
-            } finally {
-                objectOut.close();
-                gzipOut.close();
-            }
-        } catch (Exception e) {
+        try (GZIPOutputStream gzipOut = new GZIPOutputStream(baos);
+             ObjectOutputStream objectOut = new ObjectOutputStream(gzipOut)) {
+            objectOut.writeObject(object);
+        } catch (IOException e) {
             describeException(e, "Exception in Util.compress");
         }
         return baos.toByteArray();
@@ -67,20 +58,10 @@ public class Util {
     public static <T> T decompress(byte[] bytes) {
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         T object = null;
-        try {
-            GZIPInputStream gzipIn = null;
-            ObjectInputStream objectIn = null;
-            try {
-                gzipIn = new GZIPInputStream(bais);
-                objectIn = new ObjectInputStream(gzipIn);
-                object = (T) objectIn.readObject();
-            } catch (Exception e) {
-                describeException(e, "Exception in Util.decompress");
-            } finally {
-                objectIn.close();
-                gzipIn.close();
-            }
-        } catch (Exception e) {
+        try (GZIPInputStream gzipIn = new GZIPInputStream(bais);
+             ObjectInputStream objectIn = new ObjectInputStream(gzipIn)) {
+            object = (T) objectIn.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             describeException(e, "Exception in Util.decompress");
         }
         return object;

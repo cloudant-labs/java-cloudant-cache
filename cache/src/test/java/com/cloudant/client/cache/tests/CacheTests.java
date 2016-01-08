@@ -134,7 +134,7 @@ public abstract class CacheTests {
     }
 
     @Test
-    public void testExpiration() {
+    public void testExpiration() throws Exception {
         long lifespan = 1000;
         Integer val1;
 
@@ -144,10 +144,7 @@ public abstract class CacheTests {
         cacheWithLifetimes.put(key1, 42, lifespan);
         val1 = cacheWithLifetimes.get(key1);
         assertNotNull("Val1 should not be null, value is " + val1, val1);
-        try {
-            Thread.sleep(lifespan + 200);
-        } catch (Exception e) {
-        }
+        Thread.sleep(lifespan + 200);
         val1 = cacheWithLifetimes.get(key1);
         assertNull("Val1 should be null, value is " + val1, val1);
     }

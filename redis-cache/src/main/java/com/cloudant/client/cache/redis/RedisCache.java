@@ -252,7 +252,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     /**
      * cache one or more key-value pairs
      *
-     * @param map      map containing key-value pairs to cache
+     * @param map map containing key-value pairs to cache
      */
     @Override
     public void putAll(Map<K, V> map) {
@@ -290,28 +290,28 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
      * @return string containing output
      */
     public String toString() {
-        String result = "\nContents of Entire Cache\n\n";
+        StringBuilder result = new StringBuilder("\nContents of Entire Cache\n\n");
         StringRedisSerializer srs = new StringRedisSerializer();
         // If we know that keys are strings, we don't have to use
         // StringRedisSerializer
         Set<byte[]> keys = cache.keys(srs.serialize("*"));
         for (byte[] key : keys) {
             String keyString = Serializer.deserializeFromByteArray(key);
-            result += "Key: " + keyString + "\n";
+            result.append("Key: " + keyString + "\n");
             byte[] rawValue = cache.get(key);
             if (rawValue == null) {
-                result += "No value found in cache for keyString " + keyString + "\n\n";
+                result.append("No value found in cache for keyString " + keyString + "\n\n");
                 continue;
             }
             CacheEntry<V> cacheEntry = Serializer.deserializeFromByteArray(rawValue);
             if (cacheEntry == null) {
-                result += "CacheEntry is null for keyString " + keyString + "\n\n";
+                result.append("CacheEntry is null for keyString " + keyString + "\n\n");
                 continue;
             }
-            result += cacheEntry.toString() + "\n\n";
+            result.append(cacheEntry.toString() + "\n\n");
         }
-        result += "Cache size is: " + size() + "\n";
-        return result;
+        result.append("Cache size is: " + size() + "\n");
+        return result.toString();
     }
 
 }
