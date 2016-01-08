@@ -19,8 +19,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import com.cloudant.client.cache.CacheWithLifetimes;
-import com.cloudant.client.cache.InProcessCacheStats;
-import com.cloudant.client.cache.Stats;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,109 +30,125 @@ import java.util.Map;
 /**
  * @author ArunIyengar
  */
-public class CacheTests {
+public abstract class CacheTests {
+
+    protected static final int DEFAULT_EXPIRATION = 6000;
+    protected static final int DEFAULT_NUM_OBJECTS = 2000;
+
+    protected final CacheWithLifetimes<String, Integer> cacheWithLifetimes;
+
+    protected CacheTests(CacheWithLifetimes<String, Integer> cacheWithLifetimes) {
+        this.cacheWithLifetimes = cacheWithLifetimes;
+    }
+
+    @Before
+    public void clearCache() {
+        cacheWithLifetimes.clear();
+    }
 
     String key1 = "key1";
     String key2 = "key2";
     String key3 = "key3";
     long lifetime = 3000;
 
-    void testPutGetGetStatistics(CacheWithLifetimes<String, Integer> spc, boolean inProcess) {
-        spc.clear();
-        spc.put(key1, 42, lifetime);
-        spc.put(key2, 43, lifetime);
-        spc.put(key3, 44, lifetime);
-        Stats stats1 = spc.getStatistics();
-        assertEquals("Cache size should be 3", 3, spc.size());
-        if (inProcess) {
-            assertEquals("Hit rate should be 1.0", 1.0,
-                    ((InProcessCacheStats) stats1).getStats().hitRate(), .0001);
-        }
+    @Test
+    public void testPutGetGetStatistics() {
+        cacheWithLifetimes.clear();
+        cacheWithLifetimes.put(key1, 42, lifetime);
+        cacheWithLifetimes.put(key2, 43, lifetime);
+        cacheWithLifetimes.put(key3, 44, lifetime);
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
     }
 
-    public void testClear(CacheWithLifetimes<String, Integer> spc) {
-        spc.clear();
-        spc.put(key1, 42, lifetime);
-        spc.put(key2, 43, lifetime);
-        spc.put(key3, 44, lifetime);
-        assertEquals("Cache size should be 3", 3, spc.size());
-        spc.clear();
-        assertEquals("Cache size should be 0", 0, spc.size());
+    @Test
+    public void testClear() {
+        cacheWithLifetimes.clear();
+        cacheWithLifetimes.put(key1, 42, lifetime);
+        cacheWithLifetimes.put(key2, 43, lifetime);
+        cacheWithLifetimes.put(key3, 44, lifetime);
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cacheWithLifetimes.clear();
+        assertEquals("Cache size should be 0", 0, cacheWithLifetimes.size());
     }
 
-    public void testDelete(CacheWithLifetimes<String, Integer> spc) {
-        spc.clear();
-        spc.put(key1, 42, lifetime);
-        spc.put(key2, 43, lifetime);
-        spc.put(key3, 44, lifetime);
-        assertEquals("Cache size should be 3", 3, spc.size());
-        spc.delete(key2);
-        assertEquals("Cache size should be 2", 2, spc.size());
-        spc.put(key2, 50, lifetime);
-        spc.put("key4", 59, lifetime);
-        spc.put("key5", 80, lifetime);
+    @Test
+    public void testDelete() {
+        cacheWithLifetimes.clear();
+        cacheWithLifetimes.put(key1, 42, lifetime);
+        cacheWithLifetimes.put(key2, 43, lifetime);
+        cacheWithLifetimes.put(key3, 44, lifetime);
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cacheWithLifetimes.delete(key2);
+        assertEquals("Cache size should be 2", 2, cacheWithLifetimes.size());
+        cacheWithLifetimes.put(key2, 50, lifetime);
+        cacheWithLifetimes.put("key4", 59, lifetime);
+        cacheWithLifetimes.put("key5", 80, lifetime);
 
         ArrayList<String> list = new ArrayList<String>();
         list.add(key1);
         list.add(key2);
-        spc.deleteAll(list);
-        assertEquals("Cache size should be 3", 3, spc.size());
-        spc.delete("adjkfjadfjdf");
-        spc.delete("adfkasdklfjil");
-        assertEquals("Cache size should be 3", 3, spc.size());
+        cacheWithLifetimes.deleteAll(list);
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cacheWithLifetimes.delete("adjkfjadfjdf");
+        cacheWithLifetimes.delete("adfkasdklfjil");
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
     }
 
-    public void testPutAll(CacheWithLifetimes<String, Integer> spc) {
+    @Test
+    public void testPutAll() {
         HashMap<String, Integer> map = new HashMap<String, Integer>();
         map.put(key1, 42);
         map.put(key2, 43);
         map.put(key3, 44);
-        spc.clear();
-        spc.putAll(map, lifetime);
-        assertEquals("Cache size should be 3", 3, spc.size());
+        cacheWithLifetimes.clear();
+        cacheWithLifetimes.putAll(map, lifetime);
+        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
     }
 
-    public void testGetAll(CacheWithLifetimes<String, Integer> spc) {
-        spc.put(key1, 42, lifetime);
-        spc.put(key2, 43, lifetime);
-        spc.put(key3, 44, lifetime);
+    @Test
+    public void testGetAll() {
+        cacheWithLifetimes.put(key1, 42, lifetime);
+        cacheWithLifetimes.put(key2, 43, lifetime);
+        cacheWithLifetimes.put(key3, 44, lifetime);
         ArrayList<String> list = new ArrayList<String>();
         list.add(key1);
         list.add(key2);
         list.add(key3);
-        Map<String, Integer> map = spc.getAll(list);
+        Map<String, Integer> map = cacheWithLifetimes.getAll(list);
         assertEquals("Returned map size should be 3", 3, map.size());
     }
 
-    public void testUpdate(CacheWithLifetimes<String, Integer> spc) {
+    @Test
+    public void testUpdate() {
         Integer val1;
 
-        spc.put(key1, 42, lifetime);
-        val1 = spc.get(key1);
+        cacheWithLifetimes.put(key1, 42, lifetime);
+        val1 = cacheWithLifetimes.get(key1);
         assertEquals("Val1 should be 42, actual value is " + val1, 42, val1.intValue());
-        spc.put(key1, 43, lifetime);
-        val1 = spc.get(key1);
+        cacheWithLifetimes.put(key1, 43, lifetime);
+        val1 = cacheWithLifetimes.get(key1);
         assertEquals("Val1 should be 43, actual value is " + val1, 43, val1.intValue());
-        spc.put(key1, 44, lifetime);
-        val1 = spc.get(key1);
+        cacheWithLifetimes.put(key1, 44, lifetime);
+        val1 = cacheWithLifetimes.get(key1);
         assertEquals("Val1 should be 44, actual value is " + val1, 44, val1.intValue());
     }
 
-    public void testExpiration(CacheWithLifetimes<String, Integer> spc) {
+    @Test
+    public void testExpiration() {
         long lifespan = 1000;
         Integer val1;
 
-        spc.clear();
-        val1 = spc.get(key1);
+        cacheWithLifetimes.clear();
+        val1 = cacheWithLifetimes.get(key1);
         assertNull("Val1 should be null, value is " + val1, val1);
-        spc.put(key1, 42, lifespan);
-        val1 = spc.get(key1);
+        cacheWithLifetimes.put(key1, 42, lifespan);
+        val1 = cacheWithLifetimes.get(key1);
         assertNotNull("Val1 should not be null, value is " + val1, val1);
         try {
             Thread.sleep(lifespan + 200);
         } catch (Exception e) {
         }
-        val1 = spc.get(key1);
+        val1 = cacheWithLifetimes.get(key1);
         assertNull("Val1 should be null, value is " + val1, val1);
     }
 
