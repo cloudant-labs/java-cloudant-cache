@@ -12,23 +12,13 @@
  * and limitations under the License.
  */
 
-package com.cloudant.client.api;
+package com.cloudant.client.cache;
 
-import static org.lightcouch.internal.CouchDbUtil.assertNotEmpty;
-import static org.lightcouch.internal.CouchDbUtil.close;
-import static org.lightcouch.internal.CouchDbUtil.createPost;
-import static org.lightcouch.internal.CouchDbUtil.getResponse;
-import static org.lightcouch.internal.URIBuilder.buildUri;
-
+import com.cloudant.client.api.Database;
 import com.cloudant.client.api.model.Params;
-
-import org.apache.http.HttpResponse;
-import org.lightcouch.CouchDatabase;
-import org.lightcouch.DocumentConflictException;
-import org.lightcouch.NoDocumentException;
-import org.lightcouch.Response;
-
-import client.Cache;
+import com.cloudant.client.api.model.Response;
+import com.cloudant.client.org.lightcouch.DocumentConflictException;
+import com.cloudant.client.org.lightcouch.NoDocumentException;
 
 import java.net.URI;
 
@@ -39,8 +29,7 @@ import java.net.URI;
  */
 public class DatabaseCache {
 
-    CouchDatabase db;
-    CloudantClient client;
+    Database db;
     Cache<String, Object> cache;
 
 
@@ -51,8 +40,7 @@ public class DatabaseCache {
      * @param cacheInstance : cache instance which has already been created and initialized
      */
     public DatabaseCache(Database database, Cache<String, Object> cacheInstance) {
-        client = database.getClient();
-        db = database.getDb();
+        db = database;
         cache = cacheInstance;
     }
 
@@ -135,12 +123,11 @@ public class DatabaseCache {
      * @throws NoDocumentException If the document is not found in the database.
      */
     public <T> T find(Class<T> classType, String id, Params params) {
-        assertNotEmpty(params, "params");
         T value = classType.cast(cache.get(id));
         if (value != null) {
             return value;
         } else {
-            value = db.find(classType, id, params.getInternalParams());
+            value = db.find(classType, id, params);
             cache.put(id, value);
             return value;
         }
@@ -191,11 +178,8 @@ public class DatabaseCache {
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the save.
      */
-    public <T> com.cloudant.client.api.model.Response save(String id, T object) {
-        Response couchDbResponse = db.save(object);
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+    public <T> Response save(String id, T object) {
+        Response response = db.save(object);
         cache.put(id, object);
         return response;
     }
@@ -212,12 +196,8 @@ public class DatabaseCache {
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the save.
      */
-    public <T> com.cloudant.client.api.model.Response save(String id, T object, int writeQuorum) {
-        Response couchDbResponse = client.put(getDBUri(), object, true,
-                writeQuorum, client.getGson());
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+    public <T> Response save(String id, T object, int writeQuorum) {
+        Response response = db.save(object, writeQuorum);
         cache.put(id, object);
         return response;
     }
@@ -231,11 +211,8 @@ public class DatabaseCache {
      * @param object The object to save
      * @return {@link Response}
      */
-    public <T> com.cloudant.client.api.model.Response post(String id, T object) {
-        Response couchDbResponse = db.post(object);
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+    public <T> Response post(String id, T object) {
+        Response response = db.post(object);
         cache.put(id, object);
         return response;
     }
@@ -251,34 +228,10 @@ public class DatabaseCache {
      * @param writeQuorum the write Quorum
      * @return {@link Response}
      */
-    public <T> com.cloudant.client.api.model.Response post(String id, T object, int writeQuorum) {
-        assertNotEmpty(object, "object");
-        HttpResponse response = null;
-        try {
-            URI uri = buildUri(getDBUri()).query("w", writeQuorum).build();
-            response = client.executeRequest(createPost(uri, client.getGson()
-                    .toJson(object), "application/json"));
-            Response couchDbResponse = getResponse(response, Response.class,
-                    client.getGson());
-            com.cloudant.client.api.model.Response cloudantResponse = new com.cloudant.client.api
-                    .model.Response(
-                    couchDbResponse);
-            cache.put(id, object);
-            return cloudantResponse;
-        } finally {
-            close(response);
-        }
-    }
-
-    /**
-     * Saves a document with <tt>batch=ok</tt> query param.
-     *
-     * @param id     : This method caches "object" using key "id"
-     * @param object The object to save.
-     */
-    public <T> void batch(String id, T object) {
-        db.batch(object);
+    public <T> Response post(String id, T object, int writeQuorum) {
+        Response cloudantResponse = db.post(object, writeQuorum);
         cache.put(id, object);
+        return cloudantResponse;
     }
 
     /**
@@ -290,12 +243,8 @@ public class DatabaseCache {
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the update.
      */
-    public <T> com.cloudant.client.api.model.Response update(String id,
-                                                             T object) {
-        Response couchDbResponse = db.update(object);
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+    public <T> Response update(String id, T object) {
+        Response response = db.update(object);
         cache.put(id, object);
         return response;
     }
@@ -310,13 +259,8 @@ public class DatabaseCache {
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the update.
      */
-    public <T> com.cloudant.client.api.model.Response update(String id,
-                                                             T object, int writeQuorum) {
-        Response couchDbResponse = client.put(getDBUri(), object, false,
-                writeQuorum, client.getGson());
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+    public <T> Response update(String id, T object, int writeQuorum) {
+        Response response = db.update(object, writeQuorum);
         cache.put(id, object);
         return response;
     }
@@ -332,12 +276,9 @@ public class DatabaseCache {
      * @return {@link Response}
      * @throws NoDocumentException If the document is not found in the database.
      */
-    public <T> com.cloudant.client.api.model.Response remove(String id, T object) {
+    public <T> Response remove(String id, T object) {
         cache.delete(id);
-        Response couchDbResponse = db.remove(object);
-        com.cloudant.client.api.model.Response response = new com.cloudant.client.api.model
-                .Response(
-                couchDbResponse);
+        Response response = db.remove(object);
         return response;
     }
 
