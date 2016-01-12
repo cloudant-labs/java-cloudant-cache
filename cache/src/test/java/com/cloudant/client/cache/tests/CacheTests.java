@@ -15,10 +15,8 @@
 package com.cloudant.client.cache.tests;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
-import com.cloudant.client.cache.CacheWithLifetimes;
+import com.cloudant.client.cache.Cache;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -30,68 +28,64 @@ import java.util.Map;
 /**
  * @author ArunIyengar
  */
-public abstract class CacheTests {
+public abstract class CacheTests<T extends Cache<String, Integer>> {
 
-    protected static final int DEFAULT_EXPIRATION = 6000;
     protected static final int DEFAULT_NUM_OBJECTS = 2000;
 
-    protected final CacheWithLifetimes<String, Integer> cacheWithLifetimes;
+    protected T cache;
 
-    protected CacheTests(CacheWithLifetimes<String, Integer> cacheWithLifetimes) {
-        this.cacheWithLifetimes = cacheWithLifetimes;
-    }
+    protected abstract T getNewCacheInstance();
 
     @Before
-    public void clearCache() {
-        cacheWithLifetimes.clear();
+    public void setupCache() {
+        cache = getNewCacheInstance();
     }
 
     String key1 = "key1";
     String key2 = "key2";
     String key3 = "key3";
-    long lifetime = 3000;
 
     @Test
     public void testPutGetGetStatistics() {
-        cacheWithLifetimes.clear();
-        cacheWithLifetimes.put(key1, 42, lifetime);
-        cacheWithLifetimes.put(key2, 43, lifetime);
-        cacheWithLifetimes.put(key3, 44, lifetime);
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cache.clear();
+        cache.put(key1, 42);
+        cache.put(key2, 43);
+        cache.put(key3, 44);
+        assertEquals("Cache size should be 3", 3, cache.size());
     }
 
     @Test
     public void testClear() {
-        cacheWithLifetimes.clear();
-        cacheWithLifetimes.put(key1, 42, lifetime);
-        cacheWithLifetimes.put(key2, 43, lifetime);
-        cacheWithLifetimes.put(key3, 44, lifetime);
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
-        cacheWithLifetimes.clear();
-        assertEquals("Cache size should be 0", 0, cacheWithLifetimes.size());
+        cache.clear();
+        cache.put(key1, 42);
+        cache.put(key2, 43);
+        cache.put(key3, 44);
+        assertEquals("Cache size should be 3", 3, cache.size());
+        cache.clear();
+        assertEquals("Cache size should be 0", 0, cache.size());
     }
 
     @Test
     public void testDelete() {
-        cacheWithLifetimes.clear();
-        cacheWithLifetimes.put(key1, 42, lifetime);
-        cacheWithLifetimes.put(key2, 43, lifetime);
-        cacheWithLifetimes.put(key3, 44, lifetime);
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
-        cacheWithLifetimes.delete(key2);
-        assertEquals("Cache size should be 2", 2, cacheWithLifetimes.size());
-        cacheWithLifetimes.put(key2, 50, lifetime);
-        cacheWithLifetimes.put("key4", 59, lifetime);
-        cacheWithLifetimes.put("key5", 80, lifetime);
+        cache.clear();
+        cache.put(key1, 42);
+        cache.put(key2, 43);
+        cache.put(key3, 44);
+        assertEquals("Cache size should be 3", 3, cache.size());
+        cache.delete(key2);
+        assertEquals("Cache size should be 2", 2, cache.size());
+        cache.put(key2, 50);
+        cache.put("key4", 59);
+        cache.put("key5", 80);
 
         ArrayList<String> list = new ArrayList<String>();
         list.add(key1);
         list.add(key2);
-        cacheWithLifetimes.deleteAll(list);
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
-        cacheWithLifetimes.delete("adjkfjadfjdf");
-        cacheWithLifetimes.delete("adfkasdklfjil");
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cache.deleteAll(list);
+        assertEquals("Cache size should be 3", 3, cache.size());
+        cache.delete("adjkfjadfjdf");
+        cache.delete("adfkasdklfjil");
+        assertEquals("Cache size should be 3", 3, cache.size());
     }
 
     @Test
@@ -100,21 +94,21 @@ public abstract class CacheTests {
         map.put(key1, 42);
         map.put(key2, 43);
         map.put(key3, 44);
-        cacheWithLifetimes.clear();
-        cacheWithLifetimes.putAll(map, lifetime);
-        assertEquals("Cache size should be 3", 3, cacheWithLifetimes.size());
+        cache.clear();
+        cache.putAll(map);
+        assertEquals("Cache size should be 3", 3, cache.size());
     }
 
     @Test
     public void testGetAll() {
-        cacheWithLifetimes.put(key1, 42, lifetime);
-        cacheWithLifetimes.put(key2, 43, lifetime);
-        cacheWithLifetimes.put(key3, 44, lifetime);
+        cache.put(key1, 42);
+        cache.put(key2, 43);
+        cache.put(key3, 44);
         ArrayList<String> list = new ArrayList<String>();
         list.add(key1);
         list.add(key2);
         list.add(key3);
-        Map<String, Integer> map = cacheWithLifetimes.getAll(list);
+        Map<String, Integer> map = cache.getAll(list);
         assertEquals("Returned map size should be 3", 3, map.size());
     }
 
@@ -122,31 +116,14 @@ public abstract class CacheTests {
     public void testUpdate() {
         Integer val1;
 
-        cacheWithLifetimes.put(key1, 42, lifetime);
-        val1 = cacheWithLifetimes.get(key1);
+        cache.put(key1, 42);
+        val1 = cache.get(key1);
         assertEquals("Val1 should be 42, actual value is " + val1, 42, val1.intValue());
-        cacheWithLifetimes.put(key1, 43, lifetime);
-        val1 = cacheWithLifetimes.get(key1);
+        cache.put(key1, 43);
+        val1 = cache.get(key1);
         assertEquals("Val1 should be 43, actual value is " + val1, 43, val1.intValue());
-        cacheWithLifetimes.put(key1, 44, lifetime);
-        val1 = cacheWithLifetimes.get(key1);
+        cache.put(key1, 44);
+        val1 = cache.get(key1);
         assertEquals("Val1 should be 44, actual value is " + val1, 44, val1.intValue());
     }
-
-    @Test
-    public void testExpiration() throws Exception {
-        long lifespan = 1000;
-        Integer val1;
-
-        cacheWithLifetimes.clear();
-        val1 = cacheWithLifetimes.get(key1);
-        assertNull("Val1 should be null, value is " + val1, val1);
-        cacheWithLifetimes.put(key1, 42, lifespan);
-        val1 = cacheWithLifetimes.get(key1);
-        assertNotNull("Val1 should not be null, value is " + val1, val1);
-        Thread.sleep(lifespan + 200);
-        val1 = cacheWithLifetimes.get(key1);
-        assertNull("Val1 should be null, value is " + val1, val1);
-    }
-
 }
