@@ -196,8 +196,6 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      * cache one or more key-value pairs
      *
      * @param map      map containing key-value pairs to cache
-     * @param value    value associated with each key-value pair
-     * @param lifetime lifetime in milliseconds associated with each key-value pair
      */
     @Override
     public void putAll(Map<K, V> map) {
@@ -208,7 +206,6 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      * cache one or more key-value pairs
      *
      * @param map      map containing key-value pairs to cache
-     * @param value    value associated with each key-value pair
      * @param lifetime lifetime in milliseconds associated with each key-value pair
      */
     @Override
@@ -237,19 +234,19 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
      */
     public String toString() {
         Map<K, CacheEntry<V>> cacheMap = cache.asMap();
-        String result = "\nContents of Entire Cache\n\n";
+        StringBuilder result = new StringBuilder("\nContents of Entire Cache\n\n");
         for (Map.Entry<K, CacheEntry<V>> entry : cacheMap.entrySet()) {
-            result = result + "Key: " + entry.getKey() + "\n";
+            result.append("Key: " + entry.getKey() + "\n");
             CacheEntry<V> cacheEntry = entry.getValue();
             if (cacheEntry == null) {
-                result = result + "CacheEntry is null\n";
+                result.append("CacheEntry is null\n");
             } else {
-                result = result + cacheEntry.toString();
+                result.append(cacheEntry.toString());
             }
-            result = result + "\n\n";
+            result.append("\n\n");
         }
-        result = result + "Cache size is: " + size() + "\n";
-        return result;
+        result.append("Cache size is: " + size() + "\n");
+        return result.toString();
     }
 
 }

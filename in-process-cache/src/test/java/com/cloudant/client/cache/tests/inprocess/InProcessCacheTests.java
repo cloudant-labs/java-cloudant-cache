@@ -15,56 +15,29 @@
 package com.cloudant.client.cache.tests.inprocess;
 
 
+import static org.junit.Assert.assertEquals;
+
+import com.cloudant.client.cache.Stats;
 import com.cloudant.client.cache.inprocess.InProcessCache;
+import com.cloudant.client.cache.inprocess.InProcessCacheStats;
 import com.cloudant.client.cache.tests.CacheTests;
 
-import org.junit.Test;
 
 /**
  * @author ArunIyengar
  */
-public class InProcessCacheTests {
+public class InProcessCacheTests extends CacheTests {
 
-    long defaultExpiration = 6000;
-    int numObjects = 2000;
-    InProcessCache<String, Integer> spc = new InProcessCache<String, Integer>(
-            numObjects, defaultExpiration);
-    CacheTests cacheTests = new CacheTests();
+    public InProcessCacheTests() {
+        super(new InProcessCache<String, Integer>(DEFAULT_NUM_OBJECTS, DEFAULT_EXPIRATION));
+    }
 
-
-    @Test
+    @Override
     public void testPutGetGetStatistics() {
-        cacheTests.testPutGetGetStatistics(spc, true);
-    }
-
-    @Test
-    public void testClear() {
-        cacheTests.testClear(spc);
-    }
-
-    @Test
-    public void testDelete() {
-        cacheTests.testDelete(spc);
-    }
-
-    @Test
-    public void testPutAll() {
-        cacheTests.testPutAll(spc);
-    }
-
-    @Test
-    public void testGetAll() {
-        cacheTests.testGetAll(spc);
-    }
-
-    @Test
-    public void testUpdate() {
-        cacheTests.testUpdate(spc);
-    }
-
-    @Test
-    public void testExpiration() {
-        cacheTests.testExpiration(spc);
+        super.testPutGetGetStatistics();
+        Stats stats1 = cacheWithLifetimes.getStatistics();
+        assertEquals("Hit rate should be 1.0", 1.0, ((InProcessCacheStats) stats1).getStats()
+                .hitRate(), .0001);
     }
 
 }
