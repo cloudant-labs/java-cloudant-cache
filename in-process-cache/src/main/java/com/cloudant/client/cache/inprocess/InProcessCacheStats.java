@@ -20,7 +20,7 @@ import com.google.common.cache.CacheStats;
 /**
  * @author ArunIyengar
  */
-public class InProcessCacheStats implements Stats {
+public class InProcessCacheStats implements Stats<CacheStats> {
     private CacheStats cacheStats;
 
     InProcessCacheStats(CacheStats stats) {

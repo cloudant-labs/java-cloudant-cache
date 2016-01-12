@@ -21,6 +21,8 @@ package com.cloudant.client.cache;
 /*
  * Implements statistics for caches
  */
-public interface Stats {
+public interface Stats<T> {
+
+    T getStats();
 
 }
