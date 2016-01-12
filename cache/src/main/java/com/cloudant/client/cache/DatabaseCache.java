@@ -14,18 +14,35 @@
 
 package com.cloudant.client.cache;
 
+import com.cloudant.client.api.Changes;
 import com.cloudant.client.api.Database;
+import com.cloudant.client.api.DesignDocumentManager;
+import com.cloudant.client.api.Search;
+import com.cloudant.client.api.model.DbInfo;
+import com.cloudant.client.api.model.FindByIndexOptions;
+import com.cloudant.client.api.model.Index;
+import com.cloudant.client.api.model.IndexField;
 import com.cloudant.client.api.model.Params;
+import com.cloudant.client.api.model.Permissions;
 import com.cloudant.client.api.model.Response;
+import com.cloudant.client.api.model.Shard;
+import com.cloudant.client.api.views.AllDocsRequestBuilder;
+import com.cloudant.client.api.views.ViewRequestBuilder;
 import com.cloudant.client.org.lightcouch.DocumentConflictException;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Contains a Database Public API implementation with a cache.
  *
  * @author Arun Iyengar
  */
-public class DatabaseCache {
+public class DatabaseCache implements Database {
 
     protected final Database db;
     protected final Cache<String, Object> cache;
@@ -81,6 +98,8 @@ public class DatabaseCache {
     public Cache<String, Object> getCache() {
         return cache;
     }
+
+    /* Database methods follow that will interact with the cache */
 
     /**
      * Finds an Object of the specified type.
@@ -163,14 +182,13 @@ public class DatabaseCache {
      * If the object doesn't have an <code>_id</code> value, the code will
      * assign a <code>UUID</code> as the document id.
      *
-     * @param id     : This method caches "object" using key "id"
      * @param object The object to save
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the save.
      */
-    public <T> Response save(String id, T object) {
+    public Response save(Object object) {
         Response response = db.save(object);
-        cachePut(id, object);
+        cachePut(response.getId(), object);
         return response;
     }
 
@@ -180,15 +198,14 @@ public class DatabaseCache {
      * If the object doesn't have an <code>_id</code> value, the code will
      * assign a <code>UUID</code> as the document id.
      *
-     * @param id          : This method caches "object" using key "id"
      * @param object      The object to save
      * @param writeQuorum the write Quorum
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the save.
      */
-    public <T> Response save(String id, T object, int writeQuorum) {
+    public Response save(Object object, int writeQuorum) {
         Response response = db.save(object, writeQuorum);
-        cachePut(id, object);
+        cachePut(response.getId(), object);
         return response;
     }
 
@@ -197,13 +214,12 @@ public class DatabaseCache {
      * <p>
      * The database will be responsible for generating the document id.
      *
-     * @param id     : This method caches "object" using key "id"
      * @param object The object to save
      * @return {@link Response}
      */
-    public <T> Response post(String id, T object) {
+    public Response post(Object object) {
         Response response = db.post(object);
-        cachePut(id, object);
+        cachePut(response.getId(), object);
         return response;
     }
 
@@ -213,29 +229,13 @@ public class DatabaseCache {
      * <p>
      * The database will be responsible for generating the document id.
      *
-     * @param id          : This method caches "object" using key "id"
      * @param object      The object to save
      * @param writeQuorum the write Quorum
      * @return {@link Response}
      */
-    public <T> Response post(String id, T object, int writeQuorum) {
-        Response cloudantResponse = db.post(object, writeQuorum);
-        cachePut(id, object);
-        return cloudantResponse;
-    }
-
-    /**
-     * Updates an object in the database, the object must have the correct
-     * <code>_id</code> and <code>_rev</code> values.
-     *
-     * @param id     : This method caches "object" using key "id"
-     * @param object The object to update
-     * @return {@link Response}
-     * @throws DocumentConflictException If a conflict is detected during the update.
-     */
-    public <T> Response update(String id, T object) {
-        Response response = db.update(object);
-        cachePut(id, object);
+    public Response post(Object object, int writeQuorum) {
+        Response response = db.post(object, writeQuorum);
+        cachePut(response.getId(), object);
         return response;
     }
 
@@ -243,15 +243,28 @@ public class DatabaseCache {
      * Updates an object in the database, the object must have the correct
      * <code>_id</code> and <code>_rev</code> values.
      *
-     * @param id          : This method caches "object" using key "id"
+     * @param object The object to update
+     * @return {@link Response}
+     * @throws DocumentConflictException If a conflict is detected during the update.
+     */
+    public Response update(Object object) {
+        Response response = db.update(object);
+        cachePut(response.getId(), object);
+        return response;
+    }
+
+    /**
+     * Updates an object in the database, the object must have the correct
+     * <code>_id</code> and <code>_rev</code> values.
+     *
      * @param object      The object to update
      * @param writeQuorum the write Quorum
      * @return {@link Response}
      * @throws DocumentConflictException If a conflict is detected during the update.
      */
-    public <T> Response update(String id, T object, int writeQuorum) {
+    public Response update(Object object, int writeQuorum) {
         Response response = db.update(object, writeQuorum);
-        cachePut(id, object);
+        cachePut(response.getId(), object);
         return response;
     }
 
@@ -262,14 +275,147 @@ public class DatabaseCache {
      * values.
      *
      * @param object The document to remove as object.
-     * @param id     : key identifying object to remove from cache
      * @return {@link Response}
      * @throws NoDocumentException If the document is not found in the database.
      */
-    public <T> Response remove(String id, T object) {
-        cache.delete(id);
+    public Response remove(Object object) {
         Response response = db.remove(object);
+        cache.delete(response.getId());
         return response;
     }
 
+    /* Remainder of Database implementation follows, delegating calls to the Database instance
+    specified on construction */
+
+    @Override
+    public void setPermissions(String s, EnumSet<Permissions> enumSet) {
+        db.setPermissions(s, enumSet);
+    }
+
+    @Override
+    public Map<String, EnumSet<Permissions>> getPermissions() {
+        return db.getPermissions();
+    }
+
+    @Override
+    public List<Shard> getShards() {
+        return db.getShards();
+    }
+
+    @Override
+    public Shard getShard(String s) {
+        return db.getShard(s);
+    }
+
+    @Override
+    public void createIndex(String s, String s1, String s2, IndexField[] indexFields) {
+        db.createIndex(s, s1, s2, indexFields);
+    }
+
+    @Override
+    public void createIndex(String s) {
+        db.createIndex(s);
+    }
+
+    @Override
+    public <T> List<T> findByIndex(String s, Class<T> aClass) {
+        return db.findByIndex(s, aClass);
+    }
+
+    @Override
+    public <T> List<T> findByIndex(String s, Class<T> aClass, FindByIndexOptions
+            findByIndexOptions) {
+        return db.findByIndex(s, aClass, findByIndexOptions);
+    }
+
+    @Override
+    public List<Index> listIndices() {
+        return db.listIndices();
+    }
+
+    @Override
+    public void deleteIndex(String s, String s1) {
+        db.deleteIndex(s, s1);
+    }
+
+    @Override
+    public Search search(String s) {
+        return db.search(s);
+    }
+
+    @Override
+    public DesignDocumentManager getDesignDocumentManager() {
+        return db.getDesignDocumentManager();
+    }
+
+    @Override
+    public ViewRequestBuilder getViewRequestBuilder(String s, String s1) {
+        return db.getViewRequestBuilder(s, s1);
+    }
+
+    @Override
+    public AllDocsRequestBuilder getAllDocsRequestBuilder() {
+        return db.getAllDocsRequestBuilder();
+    }
+
+    @Override
+    public Changes changes() {
+        return db.changes();
+    }
+
+    @Override
+    public <T> T find(Class<T> aClass, String s, String s1) {
+        return db.find(aClass, s, s1);
+    }
+
+    @Override
+    public InputStream find(String s) {
+        return db.find(s);
+    }
+
+    @Override
+    public InputStream find(String s, String s1) {
+        return db.find(s, s1);
+    }
+
+    @Override
+    public Response remove(String s, String s1) {
+        return db.remove(s, s1);
+    }
+
+    @Override
+    public List<Response> bulk(List<?> list) {
+        return db.bulk(list);
+    }
+
+    @Override
+    public Response saveAttachment(InputStream inputStream, String s, String s1) {
+        return db.saveAttachment(inputStream, s, s1);
+    }
+
+    @Override
+    public Response saveAttachment(InputStream inputStream, String s, String s1, String s2,
+                                   String s3) {
+        return db.saveAttachment(inputStream, s, s1, s2, s3);
+    }
+
+    @Override
+    public String invokeUpdateHandler(String s, String s1, Params params) {
+        return db.invokeUpdateHandler(s, s1, params);
+    }
+
+    @Override
+    public URI getDBUri() {
+        return db.getDBUri();
+    }
+
+    @Override
+    public DbInfo info() {
+        return db.info();
+    }
+
+    @Override
+    public void ensureFullCommit() {
+        db.ensureFullCommit();
+    }
 }
