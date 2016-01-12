@@ -20,8 +20,6 @@ import com.cloudant.client.api.model.Response;
 import com.cloudant.client.org.lightcouch.DocumentConflictException;
 import com.cloudant.client.org.lightcouch.NoDocumentException;
 
-import java.net.URI;
-
 /**
  * Contains a Database Public API implementation with a cache.
  *
@@ -29,8 +27,8 @@ import java.net.URI;
  */
 public class DatabaseCache {
 
-    Database db;
-    Cache<String, Object> cache;
+    protected final Database db;
+    protected final Cache<String, Object> cache;
 
 
     /**
@@ -40,19 +38,18 @@ public class DatabaseCache {
      * @param cacheInstance : cache instance which has already been created and initialized
      */
     public DatabaseCache(Database database, Cache<String, Object> cacheInstance) {
-        db = database;
-        cache = cacheInstance;
+        this.db = database;
+        this.cache = cacheInstance;
     }
 
 
     /**
-     * put an object into the cache
+     * Put an object into the cache
      *
-     * @param <T>    Object type.
      * @param id     The document id.
      * @param object : object to cache
      */
-    public <T> void cachePut(String id, T object) {
+    protected void cachePut(String id, Object object) {
         cache.put(id, object);
     }
 
@@ -64,7 +61,7 @@ public class DatabaseCache {
      * @param classType The class of type T.
      * @return value of object
      */
-    public <T> T cacheGet(Class<T> classType, String id) {
+    protected <T> T cacheGet(Class<T> classType, String id) {
         return classType.cast(cache.get(id));
     }
 
@@ -73,15 +70,8 @@ public class DatabaseCache {
      *
      * @param id The document id.
      */
-    public void cacheDelete(String id) {
+    protected void cacheDelete(String id) {
         cache.delete(id);
-    }
-
-    /**
-     * Removes all objects from the cache
-     */
-    public void cacheClear() {
-        cache.clear();
     }
 
     /**
@@ -102,12 +92,12 @@ public class DatabaseCache {
      * @throws NoDocumentException If the document is not found in the database.
      */
     public <T> T find(Class<T> classType, String id) {
-        T value = classType.cast(cache.get(id));
+        T value = cacheGet(classType, id);
         if (value != null) {
             return value;
         } else {
             value = db.find(classType, id);
-            cache.put(id, value);
+            cachePut(id, value);
             return value;
         }
     }
@@ -123,12 +113,12 @@ public class DatabaseCache {
      * @throws NoDocumentException If the document is not found in the database.
      */
     public <T> T find(Class<T> classType, String id, Params params) {
-        T value = classType.cast(cache.get(id));
+        T value = cacheGet(classType, id);
         if (value != null) {
             return value;
         } else {
             value = db.find(classType, id, params);
-            cache.put(id, value);
+            cachePut(id, value);
             return value;
         }
     }
@@ -148,7 +138,7 @@ public class DatabaseCache {
             return value;
         } else {
             value = db.findAny(classType, uri);
-            cache.put(uri, value);
+            cachePut(uri, value);
             return value;
         }
     }
@@ -180,7 +170,7 @@ public class DatabaseCache {
      */
     public <T> Response save(String id, T object) {
         Response response = db.save(object);
-        cache.put(id, object);
+        cachePut(id, object);
         return response;
     }
 
@@ -198,7 +188,7 @@ public class DatabaseCache {
      */
     public <T> Response save(String id, T object, int writeQuorum) {
         Response response = db.save(object, writeQuorum);
-        cache.put(id, object);
+        cachePut(id, object);
         return response;
     }
 
@@ -213,7 +203,7 @@ public class DatabaseCache {
      */
     public <T> Response post(String id, T object) {
         Response response = db.post(object);
-        cache.put(id, object);
+        cachePut(id, object);
         return response;
     }
 
@@ -230,7 +220,7 @@ public class DatabaseCache {
      */
     public <T> Response post(String id, T object, int writeQuorum) {
         Response cloudantResponse = db.post(object, writeQuorum);
-        cache.put(id, object);
+        cachePut(id, object);
         return cloudantResponse;
     }
 
@@ -245,7 +235,7 @@ public class DatabaseCache {
      */
     public <T> Response update(String id, T object) {
         Response response = db.update(object);
-        cache.put(id, object);
+        cachePut(id, object);
         return response;
     }
 
@@ -261,7 +251,7 @@ public class DatabaseCache {
      */
     public <T> Response update(String id, T object, int writeQuorum) {
         Response response = db.update(object, writeQuorum);
-        cache.put(id, object);
+        cachePut(id, object);
         return response;
     }
 
@@ -280,13 +270,6 @@ public class DatabaseCache {
         cache.delete(id);
         Response response = db.remove(object);
         return response;
-    }
-
-    /**
-     * @return The database URI.
-     */
-    public URI getDBUri() {
-        return db.getDBUri();
     }
 
 }
