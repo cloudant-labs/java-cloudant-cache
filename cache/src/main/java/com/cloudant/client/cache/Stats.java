@@ -12,5 +12,15 @@
  * and limitations under the License.
  */
 
-include ':in-process-cache', ':redis-cache', ':cache'
-rootProject.name = 'java-cloduant-cache'
+package com.cloudant.client.cache;
+
+/**
+ * @author ArunIyengar
+ */
+
+/*
+ * Implements statistics for caches
+ */
+public interface Stats {
+
+}
