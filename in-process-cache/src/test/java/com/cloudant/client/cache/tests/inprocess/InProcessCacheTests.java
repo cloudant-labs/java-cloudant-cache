@@ -17,28 +17,28 @@ package com.cloudant.client.cache.tests.inprocess;
 
 import static org.junit.Assert.assertEquals;
 
-import com.cloudant.client.cache.CacheWithLifetimes;
-import com.cloudant.client.cache.Stats;
 import com.cloudant.client.cache.inprocess.InProcessCache;
 import com.cloudant.client.cache.inprocess.InProcessCacheStats;
 import com.cloudant.client.cache.tests.CacheWithLifetimesTests;
+
+import org.junit.Test;
 
 
 /**
  * @author ArunIyengar
  */
-public class InProcessCacheTests extends CacheWithLifetimesTests {
+public class InProcessCacheTests extends CacheWithLifetimesTests<InProcessCache<String, Integer>> {
 
     @Override
-    protected CacheWithLifetimes<String, Integer> getNewCacheInstance() {
+    protected InProcessCache<String, Integer> getNewCacheInstance() {
         return new InProcessCache<>(DEFAULT_NUM_OBJECTS, DEFAULT_EXPIRATION);
     }
 
-    @Override
-    public void testPutGetGetStatistics() {
-        super.testPutGetGetStatistics();
-        Stats stats1 = cache.getStatistics();
-        assertEquals("Hit rate should be 1.0", 1.0, ((InProcessCacheStats) stats1).getStats()
+    @Test
+    public void testGetStatistics() {
+        super.testMultiplePutGet();
+        InProcessCacheStats stats1 = cache.getStatistics();
+        assertEquals("Hit rate should be 1.0", 1.0, stats1.getStats()
                 .hitRate(), .0001);
     }
 
