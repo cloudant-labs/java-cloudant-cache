@@ -14,32 +14,68 @@
 
 package com.cloudant.client.cache.tests;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import com.cloudant.client.cache.CacheWithLifetimes;
 
 import org.junit.Test;
 
-public abstract class CacheWithLifetimesTests extends CacheTests<CacheWithLifetimes<String,
-        Integer>> {
+/**
+ * Extension of CacheTests that includes some additional testing related to lifetimes.
+ *
+ * @param <T> the CacheWithLifetimes implementation to be specified by the subclass
+ */
+public abstract class CacheWithLifetimesTests<T extends CacheWithLifetimes<String, Integer>>
+        extends CacheTests<T> {
 
-    protected static final int DEFAULT_EXPIRATION = 6000;
+    protected static final int DEFAULT_EXPIRATION = 500;
+    /**
+     * Constant to use for lifespan testing. It is the time in milliseconds tests add to lifespan
+     * before checking any expiry purging.
+     */
+    protected static final int LIFESPAN_TOLERANCE = 200;
 
+    /**
+     * Test that an entry with a specified lifespan is purged when that lifespan is exceeded.
+     *
+     * @throws InterruptedException if the sleep is interrupted
+     */
     @Test
-    public void testExpiration() throws Exception {
+    public void testExpiration() throws InterruptedException {
         long lifespan = 1000;
-        Integer val1;
 
-        cache.clear();
-        val1 = cache.get(key1);
-        assertNull("Val1 should be null, value is " + val1, val1);
-        cache.put(key1, 42, lifespan);
-        val1 = cache.get(key1);
-        assertNotNull("Val1 should not be null, value is " + val1, val1);
-        Thread.sleep(lifespan + 200);
-        val1 = cache.get(key1);
-        assertNull("Val1 should be null, value is " + val1, val1);
+        // Assert the cache is empty
+        assertCacheSize(0);
+
+        // Put an entry in the cache and check it
+        cache.put(key1, 1, lifespan);
+        assertEntries(1);
+
+        // Sleep for longer than the lifespan
+        Thread.sleep(lifespan + LIFESPAN_TOLERANCE);
+
+        // Assert that the entry has been removed from the cache
+        assertNoEntries(1);
+    }
+
+    /**
+     * Tests than an entry added without a lifespan is purged after the default lifespan is
+     * exceeded.
+     *
+     * @throws InterruptedException if the sleep is interrupted
+     */
+    @Test
+    public void testDefaultExpiration() throws InterruptedException {
+        // Assert the cache is empty
+        assertCacheSize(0);
+
+        // Put an entry in the cache and check it
+        populateCache(1);
+        assertEntries(1);
+
+        // Sleep for longer than the lifespan
+        Thread.sleep(DEFAULT_EXPIRATION + LIFESPAN_TOLERANCE);
+
+        // Assert that the entry has been removed from the cache
+        assertNoEntries(1);
     }
 
 }

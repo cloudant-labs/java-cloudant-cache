@@ -15,7 +15,6 @@
 package com.cloudant.client.cache.tests.redis;
 
 
-import com.cloudant.client.cache.CacheWithLifetimes;
 import com.cloudant.client.cache.redis.RedisCache;
 import com.cloudant.client.cache.tests.CacheWithLifetimesTests;
 
@@ -23,10 +22,10 @@ import com.cloudant.client.cache.tests.CacheWithLifetimesTests;
 /**
  * @author ArunIyengar
  */
-public class RedisCacheTests extends CacheWithLifetimesTests {
+public class RedisCacheTests extends CacheWithLifetimesTests<RedisCache<String, Integer>> {
 
     @Override
-    protected CacheWithLifetimes<String, Integer> getNewCacheInstance() {
+    protected RedisCache<String, Integer> getNewCacheInstance() {
         return new RedisCache<>("localhost", 6379, 60, DEFAULT_EXPIRATION);
     }
 }
