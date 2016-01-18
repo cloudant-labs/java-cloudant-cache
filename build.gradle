@@ -32,45 +32,92 @@ subprojects {
         mavenCentral()
     }
 
+    // Additional configurations for javadoc
+    configurations {
+        inheritableJavadoc {
+            transitive false
+        }
+        linkableJavadoc {
+            transitive false
+        }
+    }
+
     dependencies {
-        compile group: 'com.cloudant', name: 'cloudant-client', version: 'latest.integration'
+        // Cloudant client (java-cloudant) version
+        def javaCloudantVersion = 'latest.integration' //TODO change after java-cloudant release
+        // Dependency on java-cloudant
+        compile group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion
+        // Dependencies for inheriting javadoc and creating doc links
+        inheritableJavadoc group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion, classifier: 'sources'
+        linkableJavadoc group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion, classifier: 'javadoc'
         // Test dependencies
         testCompile group: 'junit', name: 'junit', version: '4.12'
     }
 
     // Include variable debug info in the compiled classes
     compileJava.options.debugOptions.debugLevel = "source,lines,vars"
-// Fail on javac warnings
+    // Fail on javac warnings
     compileJava.options.compilerArgs << "-Werror"
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = 'sources'
         sourceSets.all {
             into(name + "/java", { from allJava })
-            into(name + "/resources", { from resources })
         }
     }
 
-    javadoc {
-        options.setMemberLevel JavadocMemberLevel.PUBLIC
-        options.overview = "overview.html"
-        include("**/lightcouch/*Exception.java",
-                "**/client/api/**",
-                "**/http/*")
-        //add a logging listener to check for javadoc warnings and fail the build if there are any
-        boolean hasJavaDocWarnings = false;
-        doFirst {
-            getLogging().addStandardErrorListener(new StandardOutputListener() {
-                void onOutput(CharSequence output) {
-                    if (output =~ "warning:") {
-                        hasJavaDocWarnings = true
-                    }
-                }
-            })
+    // Task to copy APIs from cloudant-client that we might want to inherit doc from
+    task copyInhertiedDocSource(type: Copy) {
+        configurations.inheritableJavadoc.forEach {
+            from zipTree(it)
+            into new File(buildDir, 'javadocInheritSources')
+            include 'main/java/com/cloudant/client/api/**/*.java'
         }
-        doLast {
-            if (hasJavaDocWarnings) {
-                throw new GradleException("Build failed due to javadoc warnings.");
+    }
+
+    gradle.projectsEvaluated {
+        javadoc {
+            // Add the client API as a sourcepath for inheriting docs, filtering/copying first
+            // Make sure we copy the cloudant-client doc we want to inherit
+            dependsOn copyInhertiedDocSource
+            options.addStringOption('sourcepath', new File(buildDir, 'javaDocInheritSources/main/java').absolutePath)
+
+            // For the subprojects we include all the javadoc from dependencies on other subprojects
+            // this produces a more standalone javadoc jar for each published artifact.
+            source getProjectDocSources(project).collect() { dsp ->
+                dsp.sourceSets.main.java
+            }
+
+            // Add the offline link options for the client API pointing to javadoc.io using the resolved
+            // java-cloudant version. Use the package-list from the javadoc zip file.
+            configurations.linkableJavadoc.each {
+                options.linksOffline('http://static.javadoc.io/com.cloudant/cloudant-client/'
+                        + configurations.linkableJavadoc.resolvedConfiguration.firstLevelModuleDependencies.first().moduleVersion + '/',
+                        zipTree(it).matching {
+                    include 'package-list'
+                }.singleFile.parentFile.absolutePath)
+            }
+
+            // Set the location of the overview.html
+            options.overview 'overview.html'
+            // Include only public members in the javadoc
+            options.setMemberLevel JavadocMemberLevel.PUBLIC
+
+            // Add a logging listener to check for javadoc warnings and fail the build if there are any
+            boolean hasJavaDocWarnings = false;
+            doFirst {
+                getLogging().addStandardErrorListener(new StandardOutputListener() {
+                    void onOutput(CharSequence output) {
+                        if (output =~ "warning:") {
+                            hasJavaDocWarnings = true
+                        }
+                    }
+                })
+            }
+            doLast {
+                if (hasJavaDocWarnings) {
+                    throw new GradleException("Build failed due to javadoc warnings.");
+                }
             }
         }
     }
@@ -171,4 +218,22 @@ subprojects {
             html.enabled = !generateXML
         }
     }
+}
+
+// Function to get project doc sources (i.e. the project and all its dependent projects)
+def getProjectDocSources(project) {
+    // Get the compile time dependencies
+    def projectDependencies = project.configurations.compile.getAllDependencies().withType(ProjectDependency)
+    // Get the projects from the dependencies
+    def dependentProjects = projectDependencies*.dependencyProject
+    // Recurse
+    dependentProjects.each { dependentProjects += getProjectDocSources(it) }
+    // Finally add the original project
+    //dependentProjects.add(project)
+    // Return without duplicates
+    return dependentProjects.unique()
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.10'
 }

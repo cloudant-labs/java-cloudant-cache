@@ -15,14 +15,16 @@
 package com.cloudant.client.cache;
 
 /**
+ * Interface for getting statistics from a cache implementation.
+ *
+ * @param <T> the implementation dependent type of the statistics
  * @author ArunIyengar
- */
-
-/*
- * Implements statistics for caches
  */
 public interface Stats<T> {
 
+    /**
+     * @return the statistics object
+     */
     T getStats();
 
 }

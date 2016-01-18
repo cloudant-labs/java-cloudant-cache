@@ -12,29 +12,9 @@
  * and limitations under the License.
  */
 
-package com.cloudant.client.cache.redis;
-
-import com.cloudant.client.cache.Stats;
-
 /**
- * @author ArunIyengar
+ * <P>
+ * Provides a {@link com.cloudant.client.cache.CacheWithLifetimes} implementation that runs
+ * "in-process".
  */
-
-/*
- * This class implements cache statistics for Redis.  In Redis, statistics are returned as a string.
- */
-public class RedisCacheStats implements Stats<String> {
-    private String cacheStats;
-
-    RedisCacheStats(String stats) {
-        cacheStats = stats;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String getStats() {
-        return cacheStats;
-    }
-
-}
+package com.cloudant.client.cache.inprocess;

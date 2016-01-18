@@ -27,6 +27,9 @@ public class InProcessCacheStats implements Stats<CacheStats> {
         cacheStats = stats;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public CacheStats getStats() {
         return cacheStats;
     }

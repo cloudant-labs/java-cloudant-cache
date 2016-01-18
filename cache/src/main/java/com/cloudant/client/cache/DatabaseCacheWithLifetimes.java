@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Contains a Database Public API implementation with a cache that supports expiration times.
+ * A {@link Database} implementation with a cache that supports expiration times.
  *
  * @author Arun Iyengar
  */
@@ -35,8 +35,8 @@ public class DatabaseCacheWithLifetimes extends DatabaseCache {
     /**
      * Constructor which is designed to work with a variety of different caches.
      *
-     * @param database      : data structure with information about the database connection
-     * @param cacheInstance : cache instance which has already been created and initialized
+     * @param database      data structure with information about the database connection
+     * @param cacheInstance cache instance which has already been created and initialized
      * @param lifetime      lifetime for objects in this cache
      * @param lifetimeUnit  TimeUnit to use for the lifetime
      */
@@ -48,10 +48,10 @@ public class DatabaseCacheWithLifetimes extends DatabaseCache {
     }
 
     /**
-     * put an object into the cache
+     * Put an object into the cache.
      *
-     * @param id     The document id.
-     * @param object : object to cache
+     * @param id     the document id
+     * @param object object to cache
      */
     @Override
     protected void cachePut(String id, Object object) {
