@@ -262,6 +262,28 @@ public class DatabaseCache implements Database {
         return response;
     }
 
+    /**
+     * {@inheritDoc}
+     * <P>
+     * Objects are added to or updated in the cache if their remote operation completes
+     * successfully.
+     * </P>
+     */
+    @Override
+    public List<Response> bulk(List<?> list) {
+        List<Response> responses = db.bulk(list);
+        int index = 0;
+        for (Object o : list) {
+            Response response = responses.get(index);
+            // Cache the object we just created/updated if the operation was successful
+            if (response.getError() == null) {
+                cachePut(response.getId(), o);
+            }
+            index++;
+        }
+        return responses;
+    }
+
     /* Remainder of Database implementation follows, delegating calls to the Database instance
     specified on construction */
 
@@ -432,18 +454,6 @@ public class DatabaseCache implements Database {
     @Override
     public Response remove(String s, String s1) {
         return db.remove(s, s1);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <P>
-     * Objects are added to or updated in the cache if their remote operation completes
-     * successfully.
-     * </P>
-     */
-    @Override
-    public List<Response> bulk(List<?> list) {
-        return db.bulk(list);
     }
 
     /**

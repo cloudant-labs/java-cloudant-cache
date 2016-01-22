@@ -15,6 +15,8 @@
 package com.cloudant.client.cache.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.cloudant.client.api.ClientBuilder;
@@ -33,6 +35,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -257,6 +261,74 @@ public class DatabaseCacheTests {
     }
 
     /**
+     * Test that the db bulk operation successfully adds multiple entries to the cache
+     */
+    @Test
+    public void testBulkCachePut() {
+        List<Foo> foosToSave = generateFoos(10);
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries and they are correct
+        assertCacheSize(10);
+        foosToSave.forEach(this::assertCachePut);
+    }
+
+    /**
+     * Test that the db bulk operation can update as well as create
+     */
+    @Test
+    public void testBulkCachePutWithUpdate() {
+        // Similarly to testCacheUpdate we need to update with a different object than the one we
+        // use to create to make sure we don't assert against an instance we modified directly in
+        // the cache.
+
+        List<Foo> foosToSave = generateFoos(10);
+
+        // Save the first entry individually
+        Foo createdFoo1 = new Foo(foosToSave.get(0)._id);
+        Response create = db.save(createdFoo1);
+        assertCacheSize(1);
+        assertCachePut(createdFoo1);
+
+        // Now update 1 and do a bulk operation
+        foosToSave.get(0)._rev = create.getRev();
+        foosToSave.get(0).testField = "updated";
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries and they are correct
+        assertCacheSize(10);
+        foosToSave.forEach(this::assertCachePut);
+    }
+
+    /**
+     * Test that the db bulk operation only adds successful items to the cache
+     */
+    @Test
+    public void testBulkCachePutWithError() {
+        List<Foo> foosToSave = generateFoos(10);
+
+        // Create the first entry individually, using the same ID as the first of our bulk entries
+        Foo createdFoo1 = new Foo(foosToSave.get(0)._id);
+        db.save(createdFoo1);
+        assertCacheSize(1);
+        assertCachePut(createdFoo1);
+
+        // Now update 1 and give it a bad revision to cause the update to fail
+        foosToSave.get(0).testField = "updated";
+        foosToSave.get(0)._rev = "1-madeuprev";
+        // Do the bulk operation
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries
+        assertEquals("The cache should contain 10 entries", 10, cache.size());
+
+        // Assert that foo1 was not updated in the cache because of the error
+        Foo foo1FromCache = (Foo) cache.get(createdFoo1._id);
+        assertNotEquals("The cached foo1 should not be the latest foo1", foosToSave.get(0), foo1FromCache);
+        assertNull("The testField should be null", foo1FromCache.testField);
+    }
+
+    /**
      * Assert that the cache contains a single entry and that it is the expected foo.
      */
     private void assertCachePut() {
@@ -299,6 +371,20 @@ public class DatabaseCacheTests {
      */
     private void assertCacheGet(Foo retrievedFoo) {
         assertEquals("The retrieved document should match", foo, retrievedFoo);
+    }
+
+    /**
+     * Generate some foos for testing.
+     *
+     * @param n the number of foos to generate
+     * @return the list of generated foos
+     */
+    private List<Foo> generateFoos(int n) {
+        List<Foo> foos = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            foos.add(new Foo(i + "-" + UUID.randomUUID().toString()));
+        }
+        return foos;
     }
 
     private static final class Foo {
