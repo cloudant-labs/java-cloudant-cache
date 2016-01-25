@@ -196,18 +196,22 @@ public class DatabaseCacheTests {
      */
     @Test
     public void testCacheUpdate() {
-        // Create the document
-        foo.testField = "old";
-        Response create = db.post(foo);
-        assertCachePut();
+        // Since this test updates an object (which is referenced locally in the cache) we need to
+        // perform the update using a separate object, not modifying the original object.
 
-        // Store the rev for update
+        // Create the document in the DB from foo and assert it is present in the cache
+        Foo createdFoo = new Foo(foo._id);
+        Response create = db.post(createdFoo);
+        assertCachePut(createdFoo);
+
+        // Store the rev for the update
         foo._rev = create.getRev();
 
         // Do an update
         foo.testField = "new";
         db.update(foo);
 
+        // Assert that the object in the cache is foo, not the original createdFoo
         assertCachePut();
     }
 
@@ -216,18 +220,22 @@ public class DatabaseCacheTests {
      */
     @Test
     public void testCacheUpdateWithQuorum() {
-        // Create the document
-        foo.testField = "old";
-        Response create = db.post(foo);
-        assertCachePut();
+        // Since this test updates an object (which is referenced locally in the cache) we need to
+        // perform the update using a separate object, not modifying the original object.
 
-        // Store the rev for update
+        // Create the document in the DB from foo and assert it is present in the cache
+        Foo createdFoo = new Foo(foo._id);
+        Response create = db.post(createdFoo);
+        assertCachePut(createdFoo);
+
+        // Store the rev for the update
         foo._rev = create.getRev();
 
         // Do an update
         foo.testField = "new";
         db.update(foo, 1);
 
+        // Assert that the object in the cache is foo, not the original createdFoo
         assertCachePut();
     }
 
