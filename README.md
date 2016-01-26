@@ -1,6 +1,6 @@
 # Java Cloudant Cache
 
-A Java object cache for the [java-cloudant client](https://github.com/cloudant/java-cloudant) and
+A Java object cache for the [java-cloudant cloudant-client](https://github.com/cloudant/java-cloudant) and
  Cloudant databases.
 
 ## Usage
@@ -22,18 +22,18 @@ dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache', version: 'latest.release'
 }
 ```
-* In-process cache: **cloudant-client-in-process-cache** (includes cloudant-client-cache). Provides a
+* In-process cache: **cloudant-client-cache-in-process** (depends on cloudant-client-cache). Provides a
 `CacheWithLifetimes` implementation that runs in-process.
 ```groovy
 dependencies {
-    compile group: 'com.cloudant', name: 'cloudant-client-in-process-cache', version: 'latest.release'
+    compile group: 'com.cloudant', name: 'cloudant-client-cache-in-process', version: 'latest.release'
 }
 ```
-* Redis cache: **cloudant-client-redis-cache** (includes cloudant-client-cache). Provides a
+* Redis cache: **cloudant-client-cache-redis** (depends on cloudant-client-cache). Provides a
 `CacheWithLifetimes` implementation that uses a Redis instance as the store.
 ```groovy
 dependencies {
-    compile group: 'com.cloudant', name: 'cloudant-client-redis-cache', version: 'latest.release'
+    compile group: 'com.cloudant', name: 'cloudant-client-cache-redis', version: 'latest.release'
 }
 ```
 
@@ -85,8 +85,8 @@ Database lifetimeCachedDb = new DatabaseCacheWithLifetimes(db, cache, 1, TimeUni
 
 ## Related documentation
 * [API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache/)
-* [In-process cache API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-in-process-cache/)
-* [Redis cache API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-redis-cache/)
+* [In-process cache API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-in-process/)
+* [Redis cache API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-redis/)
 * [Client (java-cloudant) API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client/)
 * [Cloudant docs](http://docs.cloudant.com/)
 * [Cloudant for developers](https://cloudant.com/for-developers/)

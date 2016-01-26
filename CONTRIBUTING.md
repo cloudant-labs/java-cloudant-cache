@@ -1,7 +1,7 @@
 Contributing
 =======
 
-java-cloudant-cache is written in Java and uses gradle as its build tool and the maven central
+The java-cloudant-cache project is written in Java and uses gradle as its build tool and the maven central
 repository for dependencies.
 
 ## Contributor License Agreement

@@ -12,8 +12,8 @@
  * and limitations under the License.
  */
 
-dependencies {
-    compile project(':cache')
-    compile group: 'com.google.guava', name: 'guava', version: '18.0'
-    testCompile project(path: ':cache', configuration: 'testOutput')
-}
+/**
+ * Primary package for cloudant-client-cache. Provides interfaces and utilities as well as a simple
+ * LRU cache implementation.
+ */
+package com.cloudant.client.cache;

@@ -12,5 +12,4 @@
  * and limitations under the License.
  */
 
-include ':in-process-cache', ':redis-cache', ':cache'
-rootProject.name = 'java-cloduant-cache'
+include ':cloudant-client-cache', ':cloudant-client-cache-in-process', ':cloudant-client-cache-redis'
