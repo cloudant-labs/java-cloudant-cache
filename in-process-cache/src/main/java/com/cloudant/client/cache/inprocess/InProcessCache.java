@@ -25,12 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author ArunIyengar
- */
-
 /*
- * This cache implementation stores data in the same process as the executing program
+ * This cache implementation stores data in the same process as the executing program.
+ *
+ * @author ArunIyengar
  */
 public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
 
@@ -38,7 +36,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     private long defaultLifetime;  // default object lifetime in millisecods
 
     /**
-     * Constructor
+     * Construct a new instance.
      *
      * @param maxObjects      maximum number of objects which can be stored before
      *                        replacement starts
@@ -56,7 +54,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * delete all key-value pairs from the cache
+     * {@inheritDoc}
      */
     @Override
     public void clear() {
@@ -64,9 +62,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * delete a key-value pair from the cache
-     *
-     * @param key key corresponding to value
+     * {@inheritDoc}
      */
     @Override
     public void delete(K key) {
@@ -74,9 +70,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * delete one or more key-value pairs from the cache
-     *
-     * @param keys iterable data structure containing the keys to delete
+     * {@inheritDoc}
      */
     @Override
     public void deleteAll(List<K> keys) {
@@ -84,11 +78,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * look up a value in the cache
-     *
-     * @param key key corresponding to value
-     * @return value corresponding to key, null if key is not in cache or if
-     * value is expired
+     * {@inheritDoc}
      */
     @Override
     public V get(K key) {
@@ -103,11 +93,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * look up one or more values in the cache. Don't return expired values.
-     *
-     * @param keys iterable data structure containing the keys to look up
-     * @return map containing key-value pairs corresponding to unexpired data in
-     * the cache
+     * {@inheritDoc}
      */
     @Override
     public Map<K, V> getAll(List<K> keys) {
@@ -125,13 +111,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * look up a CacheEntry in the cache. The CacheEntry may correspond to
-     * expired data. This method can be used to revalidate cached objects whose
-     * expiration times have passed
-     *
-     * @param key key corresponding to value
-     * @return value corresponding to key (may be expired), null if key is not
-     * in cache
+     * {@inheritDoc}
      */
     @Override
     public CacheEntry<V> getCacheEntry(K key) {
@@ -139,9 +119,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * get cache statistics
-     *
-     * @return data structure containing statistics
+     * {@inheritDoc}
      */
     @Override
     public InProcessCacheStats getStatistics() {
@@ -168,10 +146,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache a key-value pair
-     *
-     * @param key   key associated with value
-     * @param value value associated with key
+     * {@inheritDoc}
      */
     @Override
     public void put(K key, V value) {
@@ -179,11 +154,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache a key-value pair
-     *
-     * @param key      key associated with value
-     * @param value    value associated with key
-     * @param lifetime lifetime in milliseconds associated with data
+     * {@inheritDoc}
      */
     @Override
     public void put(K key, V value, long lifetime) {
@@ -193,9 +164,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache one or more key-value pairs
-     *
-     * @param map      map containing key-value pairs to cache
+     * {@inheritDoc}
      */
     @Override
     public void putAll(Map<K, V> map) {
@@ -203,10 +172,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache one or more key-value pairs
-     *
-     * @param map      map containing key-value pairs to cache
-     * @param lifetime lifetime in milliseconds associated with each key-value pair
+     * {@inheritDoc}
      */
     @Override
     public void putAll(Map<K, V> map, long lifetime) {
@@ -220,7 +186,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Return number of objects in cache
+     * {@inheritDoc}
      */
     @Override
     public long size() {
@@ -228,7 +194,7 @@ public class InProcessCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Return contents of entire cache in a string
+     * Return contents of entire cache in a string.
      *
      * @return string containing output
      */

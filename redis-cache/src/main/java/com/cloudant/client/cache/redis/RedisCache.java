@@ -39,10 +39,10 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
 
 
     /**
-     * Constructor creating Jedis instance
+     * Create a cache with the specified lifetime connected to Redis at the specified host.
      *
-     * @param host            post where Redis is running
-     * @param defaultLifespan Default life time in milliseconds for cached objects
+     * @param host            host where Redis is running
+     * @param defaultLifespan default life time in milliseconds for cached objects
      */
     public RedisCache(String host, long defaultLifespan) {
         cache = new Jedis(host);
@@ -50,11 +50,12 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Constructor creating Jedis instance
+     * Create a cache with the specified lifetime connected to Redis at the specified host &amp;
+     * port.
      *
-     * @param host            post where Redis is running
+     * @param host            host where Redis is running
      * @param port            port number
-     * @param defaultLifespan Default life time in milliseconds for cached objects
+     * @param defaultLifespan default life time in milliseconds for cached objects
      */
     public RedisCache(String host, int port, long defaultLifespan) {
         cache = new Jedis(host, port);
@@ -62,12 +63,16 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Constructor creating Jedis instance
+     * Create a cache with the specified lifetime connected to Redis at the specified host &amp;
+     * port.
+     * <P>
+     * Configure Jedis to close idle connections after the specified time.
+     * </P>
      *
-     * @param host            post where Redis is running
+     * @param host            host where Redis is running
      * @param port            port number
      * @param timeout         number of seconds before Jedis closes an idle connection
-     * @param defaultLifespan Default life time in milliseconds for cached objects
+     * @param defaultLifespan default life time in milliseconds for cached objects
      */
     public RedisCache(String host, int port, int timeout, long defaultLifespan) {
         cache = new Jedis(host, port, timeout);
@@ -89,7 +94,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
 
 
     /**
-     * delete all key-value pairs from the current database
+     * {@inheritDoc}
      */
     @Override
     public void clear() {
@@ -97,16 +102,14 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Close a Redis connection
+     * Close the Redis connection.
      */
     public void close() {
         cache.close();
     }
 
     /**
-     * delete a key-value pair from the cache
-     *
-     * @param key key corresponding to value
+     * {@inheritDoc}
      */
     @Override
     public void delete(K key) {
@@ -114,9 +117,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * delete one or more key-value pairs from the cache
-     *
-     * @param keys iterable data structure containing the keys to delete
+     * {@inheritDoc}
      */
     @Override
     public void deleteAll(List<K> keys) {
@@ -126,18 +127,16 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * delete all key-value pairs from all databases
+     * Delete all key-value pairs from all databases
+     *
+     * @return status code reply
      */
     public String flushAll() {
         return cache.flushAll();
     }
 
     /**
-     * look up a value in the cache
-     *
-     * @param key key corresponding to value
-     * @return value corresponding to key, null if key is not in cache or if
-     * value is expired
+     * {@inheritDoc}
      */
     @Override
     public V get(K key) {
@@ -152,11 +151,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * look up one or more values in the cache. Don't return expired values.
-     *
-     * @param keys iterable data structure containing the keys to look up
-     * @return map containing key-value pairs corresponding to unexpired data in
-     * the cache
+     * {@inheritDoc}
      */
     @Override
     public Map<K, V> getAll(List<K> keys) {
@@ -171,13 +166,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * look up a CacheEntry in the cache. The CacheEntry may correspond to
-     * expired data. This method can be used to revalidate cached objects whose
-     * expiration times have passed
-     *
-     * @param key key corresponding to value
-     * @return value corresponding to key (may be expired), null if key is not
-     * in cache
+     * {@inheritDoc}
      */
     @Override
     public CacheEntry<V> getCacheEntry(K key) {
@@ -189,10 +178,11 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * get cache statistics.  For Redis, cache statistics are contained in a string.  The string is
-     * returned by RedisCacheStats.getStats()
-     *
-     * @return data structure containing statistics
+     * {@inheritDoc}
+     * <P>
+     * For Redis, cache statistics are contained in a string.  The string is
+     * returned by {@link RedisCacheStats#getStats()}.
+     * </P>
      */
     @Override
     public RedisCacheStats getStatistics() {
@@ -218,10 +208,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache a key-value pair
-     *
-     * @param key   key associated with value
-     * @param value value associated with key
+     * {@inheritDoc}
      */
     @Override
     public void put(K key, V value) {
@@ -229,11 +216,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache a key-value pair
-     *
-     * @param key      key associated with value
-     * @param value    value associated with key
-     * @param lifetime lifetime in milliseconds associated with data
+     * {@inheritDoc}
      */
     @Override
     public void put(K key, V value, long lifetime) {
@@ -250,9 +233,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache one or more key-value pairs
-     *
-     * @param map map containing key-value pairs to cache
+     * {@inheritDoc}
      */
     @Override
     public void putAll(Map<K, V> map) {
@@ -260,10 +241,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * cache one or more key-value pairs
-     *
-     * @param map      map containing key-value pairs to cache
-     * @param lifetime lifetime in milliseconds associated with each key-value pair
+     * {@inheritDoc}
      */
     @Override
     public void putAll(Map<K, V> map, long lifetime) {
@@ -277,7 +255,7 @@ public class RedisCache<K, V> implements CacheWithLifetimes<K, V> {
     }
 
     /**
-     * Return number of objects in cache
+     * {@inheritDoc}
      */
     @Override
     public long size() {

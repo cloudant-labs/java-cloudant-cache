@@ -33,7 +33,7 @@ import java.util.zip.GZIPOutputStream;
 public class Util {
 
     /**
-     * compress a serializable object using gzip
+     * Compress a serializable object using gzip
      *
      * @param object object which implements Serializable
      * @return byte array containing compressed objects
@@ -53,6 +53,7 @@ public class Util {
      * Decompress a compressed object
      *
      * @param bytes byte array corresponding to compressed object
+     * @param <T>   the type of the object to decompress and deserialize
      * @return decompressed object
      */
     public static <T> T decompress(byte[] bytes) {
@@ -87,8 +88,5 @@ public class Util {
      */
     public static long getTime() {
         return System.currentTimeMillis();
-        // return (new Date()).getTime();
-        //java.util.Date.getTime() method returns how many milliseconds have passed since 
-        //January 1, 1970, 00:00:00 GMT
     }
 }

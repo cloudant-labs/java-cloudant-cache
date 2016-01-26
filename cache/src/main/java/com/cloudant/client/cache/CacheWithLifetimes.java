@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public interface CacheWithLifetimes<K, V> extends Cache<K, V> {
     /**
-     * cache a key-value pair
+     * Cache a key-value pair.
      *
      * @param key      key associated with value
      * @param value    value associated with key
@@ -30,7 +30,7 @@ public interface CacheWithLifetimes<K, V> extends Cache<K, V> {
     void put(K key, V value, long lifetime);
 
     /**
-     * cache one or more key-value pairs
+     * Cache one or more key-value pairs.
      *
      * @param map      map containing key-value pairs to cache
      * @param lifetime lifetime in milliseconds associated with each key-value pair.
@@ -41,12 +41,12 @@ public interface CacheWithLifetimes<K, V> extends Cache<K, V> {
     void putAll(Map<K, V> map, long lifetime);
 
     /**
-     * look up a CacheEntry in the cache. The CacheEntry may correspond to
+     * Look up a CacheEntry in the cache. The CacheEntry may correspond to
      * expired data. This method can be used to revalidate cached objects whose
-     * expiration times have passed
+     * expiration times have passed.
      *
      * @param key key corresponding to value
-     * @return value corresponding to key (may be expired), null if key is not
+     * @return value corresponding to key (may be expired), {@code null} if key is not
      * in cache
      */
     CacheEntry<V> getCacheEntry(K key);

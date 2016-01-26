@@ -12,29 +12,8 @@
  * and limitations under the License.
  */
 
-package com.cloudant.client.cache.redis;
-
-import com.cloudant.client.cache.Stats;
-
 /**
- * @author ArunIyengar
+ * Primary package for java-cloudant-cache. Provides interfaces and utilities as well as a simple
+ * LRU cache implementation.
  */
-
-/*
- * This class implements cache statistics for Redis.  In Redis, statistics are returned as a string.
- */
-public class RedisCacheStats implements Stats<String> {
-    private String cacheStats;
-
-    RedisCacheStats(String stats) {
-        cacheStats = stats;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String getStats() {
-        return cacheStats;
-    }
-
-}
+package com.cloudant.client.cache;

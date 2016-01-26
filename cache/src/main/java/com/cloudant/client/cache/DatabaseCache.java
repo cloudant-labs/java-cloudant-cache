@@ -28,8 +28,6 @@ import com.cloudant.client.api.model.Response;
 import com.cloudant.client.api.model.Shard;
 import com.cloudant.client.api.views.AllDocsRequestBuilder;
 import com.cloudant.client.api.views.ViewRequestBuilder;
-import com.cloudant.client.org.lightcouch.DocumentConflictException;
-import com.cloudant.client.org.lightcouch.NoDocumentException;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -38,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Contains a Database Public API implementation with a cache.
+ * A {@link Database} implementation with a cache.
  *
  * @author Arun Iyengar
  */
@@ -51,8 +49,8 @@ public class DatabaseCache implements Database {
     /**
      * Constructor which is designed to work with a variety of different caches.
      *
-     * @param database      : data structure with information about the database connection
-     * @param cacheInstance : cache instance which has already been created and initialized
+     * @param database      data structure with information about the database connection
+     * @param cacheInstance cache instance which has already been created and initialized
      */
     public DatabaseCache(Database database, Cache<String, Object> cacheInstance) {
         this.db = database;
@@ -61,21 +59,21 @@ public class DatabaseCache implements Database {
 
 
     /**
-     * Put an object into the cache
+     * Put an object into the cache.
      *
-     * @param id     The document id.
-     * @param object : object to cache
+     * @param id     the document id
+     * @param object object to cache
      */
     protected void cachePut(String id, Object object) {
         cache.put(id, object);
     }
 
     /**
-     * Return value of cached object (or null if not present)
+     * Return value of cached object (or null if not present).
      *
-     * @param <T>       Object type.
-     * @param id        The document id.
-     * @param classType The class of type T.
+     * @param <T>       Object type
+     * @param id        the document id
+     * @param classType the class of type T
      * @return value of object
      */
     protected <T> T cacheGet(Class<T> classType, String id) {
@@ -83,17 +81,19 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Return an object from the cache, if present
+     * Return an object from the cache, if present.
      *
-     * @param id The document id.
+     * @param id The document id
      */
     protected void cacheDelete(String id) {
         cache.delete(id);
     }
 
     /**
-     * Returns the cache so that the application can mange it using the Cache
-     * API methods
+     * Returns the cache so that the application can manage it using the Cache
+     * API methods.
+     *
+     * @return the cache instance
      */
     public Cache<String, Object> getCache() {
         return cache;
@@ -102,13 +102,11 @@ public class DatabaseCache implements Database {
     /* Database methods follow that will interact with the cache */
 
     /**
-     * Finds an Object of the specified type.
-     *
-     * @param <T>       Object type.
-     * @param classType The class of type T.
-     * @param id        The document id.
-     * @return An object of type T.
-     * @throws NoDocumentException If the document is not found in the database.
+     * <P>
+     * Preferentially use the cache for the find operation. Adds the retrieved T to the cache if
+     * it was not present and was found in the remote database.
+     * </P>
+     * {@inheritDoc}
      */
     public <T> T find(Class<T> classType, String id) {
         T value = cacheGet(classType, id);
@@ -122,14 +120,11 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Finds an Object of the specified type.
-     *
-     * @param <T>       Object type.
-     * @param classType The class of type T.
-     * @param id        The document id.
-     * @param params    Extra parameters to append.
-     * @return An object of type T.
-     * @throws NoDocumentException If the document is not found in the database.
+     * <P>
+     * Preferentially use the cache for the find operation. Adds the retrieved T to the cache if
+     * it was not present and was found in the remote database.
+     * </P>
+     * {@inheritDoc}
      */
     public <T> T find(Class<T> classType, String id, Params params) {
         T value = cacheGet(classType, id);
@@ -143,13 +138,19 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * This method finds any document given a URI.
-     * <p>
-     * The URI must be URI-encoded.
-     *
-     * @param classType The class of type T.
-     * @param uri       The URI as string.
-     * @return An object of type T.
+     * <P>
+     * Preferentially use the cache for the find operation. Adds the retrieved T to the cache if
+     * it was not present and was found in the remote database.
+     * </P>
+     * <P>
+     * Note that this method uses the URI as the cache key (and not document ID) since the
+     * document may come from a different database or server. As a result even if the same object
+     * is already stored in the cache under its document ID it would be retrieved remotely by
+     * this method and re-stored in the cache with a URI key. This also prevents the remove
+     * method from removing these objects from the cache so it is recommended to only use this
+     * method with a {@link CacheWithLifetimes} cache to avoid the cache growing unbounded.
+     * </P>
+     * {@inheritDoc}
      */
     public <T> T findAny(Class<T> classType, String uri) {
         T value = classType.cast(cache.get(uri));
@@ -163,10 +164,11 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Checks if a document exist in the database.
-     *
-     * @param id The document _id field.
-     * @return true If the document is found, false otherwise.
+     * <P>
+     * Checks if the cache contains the specified document. If it does not then checks if the
+     * database contains the specified document.
+     * </P>
+     * {@inheritDoc}
      */
     public boolean contains(String id) {
         if (cache.get(id) != null) {
@@ -177,14 +179,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Saves an object in the database, using HTTP <tt>PUT</tt> request.
-     * <p>
-     * If the object doesn't have an <code>_id</code> value, the code will
-     * assign a <code>UUID</code> as the document id.
-     *
-     * @param object The object to save
-     * @return {@link Response}
-     * @throws DocumentConflictException If a conflict is detected during the save.
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also added to the cache.
+     * </P>
      */
     public Response save(Object object) {
         Response response = db.save(object);
@@ -193,15 +191,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Saves an object in the database, using HTTP <tt>PUT</tt> request.
-     * <p>
-     * If the object doesn't have an <code>_id</code> value, the code will
-     * assign a <code>UUID</code> as the document id.
-     *
-     * @param object      The object to save
-     * @param writeQuorum the write Quorum
-     * @return {@link Response}
-     * @throws DocumentConflictException If a conflict is detected during the save.
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also added to the cache.
+     * </P>
      */
     public Response save(Object object, int writeQuorum) {
         Response response = db.save(object, writeQuorum);
@@ -210,12 +203,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Saves an object in the database using HTTP <tt>POST</tt> request.
-     * <p>
-     * The database will be responsible for generating the document id.
-     *
-     * @param object The object to save
-     * @return {@link Response}
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also added to the cache.
+     * </P>
      */
     public Response post(Object object) {
         Response response = db.post(object);
@@ -224,14 +215,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Saves an object in the database using HTTP <tt>POST</tt> request with
-     * specificied write quorum
-     * <p>
-     * The database will be responsible for generating the document id.
-     *
-     * @param object      The object to save
-     * @param writeQuorum the write Quorum
-     * @return {@link Response}
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also added to the cache.
+     * </P>
      */
     public Response post(Object object, int writeQuorum) {
         Response response = db.post(object, writeQuorum);
@@ -240,12 +227,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Updates an object in the database, the object must have the correct
-     * <code>_id</code> and <code>_rev</code> values.
-     *
-     * @param object The object to update
-     * @return {@link Response}
-     * @throws DocumentConflictException If a conflict is detected during the update.
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also updated in the cache.
+     * </P>
      */
     public Response update(Object object) {
         Response response = db.update(object);
@@ -254,13 +239,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Updates an object in the database, the object must have the correct
-     * <code>_id</code> and <code>_rev</code> values.
-     *
-     * @param object      The object to update
-     * @param writeQuorum the write Quorum
-     * @return {@link Response}
-     * @throws DocumentConflictException If a conflict is detected during the update.
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also updated in the cache.
+     * </P>
      */
     public Response update(Object object, int writeQuorum) {
         Response response = db.update(object, writeQuorum);
@@ -269,14 +251,10 @@ public class DatabaseCache implements Database {
     }
 
     /**
-     * Removes a document from the database.
-     * <p>
-     * The object must have the correct <code>_id</code> and <code>_rev</code>
-     * values.
-     *
-     * @param object The document to remove as object.
-     * @return {@link Response}
-     * @throws NoDocumentException If the document is not found in the database.
+     * {@inheritDoc}
+     * <P>
+     * If the operation was successful then the object is also removed from the cache.
+     * </P>
      */
     public Response remove(Object object) {
         Response response = db.remove(object);
@@ -287,133 +265,231 @@ public class DatabaseCache implements Database {
     /* Remainder of Database implementation follows, delegating calls to the Database instance
     specified on construction */
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setPermissions(String s, EnumSet<Permissions> enumSet) {
         db.setPermissions(s, enumSet);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Map<String, EnumSet<Permissions>> getPermissions() {
         return db.getPermissions();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Shard> getShards() {
         return db.getShards();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Shard getShard(String s) {
         return db.getShard(s);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void createIndex(String s, String s1, String s2, IndexField[] indexFields) {
         db.createIndex(s, s1, s2, indexFields);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void createIndex(String s) {
         db.createIndex(s);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <T> List<T> findByIndex(String s, Class<T> aClass) {
         return db.findByIndex(s, aClass);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public <T> List<T> findByIndex(String s, Class<T> aClass, FindByIndexOptions
             findByIndexOptions) {
         return db.findByIndex(s, aClass, findByIndexOptions);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Index> listIndices() {
         return db.listIndices();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void deleteIndex(String s, String s1) {
         db.deleteIndex(s, s1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Search search(String s) {
         return db.search(s);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DesignDocumentManager getDesignDocumentManager() {
         return db.getDesignDocumentManager();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ViewRequestBuilder getViewRequestBuilder(String s, String s1) {
         return db.getViewRequestBuilder(s, s1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public AllDocsRequestBuilder getAllDocsRequestBuilder() {
         return db.getAllDocsRequestBuilder();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Changes changes() {
         return db.changes();
     }
 
+    /**
+     * <P>
+     * Note that cache implementations currently do not store multiple revisions, so this method
+     * only operates remotely.
+     * </P>
+     * {@inheritDoc}
+     */
     @Override
     public <T> T find(Class<T> aClass, String s, String s1) {
         return db.find(aClass, s, s1);
     }
 
+    /**
+     * <P>
+     * Note that cache implementations only store objects, so InputStreams are returned from the
+     * remote database.
+     * </P>
+     * {@inheritDoc}
+     */
     @Override
     public InputStream find(String s) {
         return db.find(s);
     }
 
+    /**
+     * <P>
+     * Note that cache implementations only store objects, so InputStreams are returned from the
+     * remote database.
+     * </P>
+     * {@inheritDoc}
+     */
     @Override
     public InputStream find(String s, String s1) {
         return db.find(s, s1);
     }
 
+    /**
+     * <P>
+     * Note that cache implementations currently do not store multiple revisions, so this method
+     * only operates remotely.
+     * </P>
+     * {@inheritDoc}
+     */
     @Override
     public Response remove(String s, String s1) {
         return db.remove(s, s1);
     }
 
+    /**
+     * {@inheritDoc}
+     * <P>
+     * Objects are added to or updated in the cache if their remote operation completes
+     * successfully.
+     * </P>
+     */
     @Override
     public List<Response> bulk(List<?> list) {
         return db.bulk(list);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Response saveAttachment(InputStream inputStream, String s, String s1) {
         return db.saveAttachment(inputStream, s, s1);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Response saveAttachment(InputStream inputStream, String s, String s1, String s2,
                                    String s3) {
         return db.saveAttachment(inputStream, s, s1, s2, s3);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String invokeUpdateHandler(String s, String s1, Params params) {
         return db.invokeUpdateHandler(s, s1, params);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public URI getDBUri() {
         return db.getDBUri();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public DbInfo info() {
         return db.info();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void ensureFullCommit() {
         db.ensureFullCommit();

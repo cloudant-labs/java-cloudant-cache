@@ -25,12 +25,19 @@ import java.io.ObjectOutputStream;
  */
 public class Serializer {
 
-    // Serialize a single object to a byte array
-    public static <T> byte[] serializeToByteArray(T r) {
+    /**
+     * Serialize a single object to a byte array.
+     *
+     * @param object to serialize
+     * @param <T>    the type of object
+     * @return byte array serialization of object
+     * @see #deserializeFromByteArray(byte[])
+     */
+    public static <T> byte[] serializeToByteArray(T object) {
         byte[] bytes = null;
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              ObjectOutputStream out = new ObjectOutputStream(bos)) {
-            out.writeObject(r);
+            out.writeObject(object);
             bytes = bos.toByteArray();
         } catch (IOException ex) {
             new Exception("Exception in Serializer.serializeToByteArray", ex).printStackTrace();
@@ -38,7 +45,14 @@ public class Serializer {
         return bytes;
     }
 
-    // deserialize a single object from a byte array
+    /**
+     * Deserialize a single object from a byte array.
+     *
+     * @param bytes to deserialize
+     * @param <T>   the type of the object
+     * @return instance of T deserialized from the byte array
+     * @see #serializeToByteArray(Object)
+     */
     public static <T> T deserializeFromByteArray(byte[] bytes) {
 
         T r = null;
