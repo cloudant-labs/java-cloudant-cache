@@ -15,6 +15,8 @@
 package com.cloudant.client.cache.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.cloudant.client.api.ClientBuilder;
@@ -33,6 +35,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -133,7 +137,7 @@ public class DatabaseCacheTests {
         String docUri = db.getDBUri() + "/" + foo._id;
         Foo retrievedFoo = db.findAny(Foo.class, docUri);
         // The entry should now be in the cache twice, once with ID as key, and once with url as key
-        assertEquals("The cache size should be 2", 2, cache.size());
+        assertCacheSize(2);
         assertEquals("The retrieved foo should match the expected", foo, retrievedFoo);
         assertEquals("The cache should contain foo with uri as key", foo, cache.get(docUri));
 
@@ -196,18 +200,22 @@ public class DatabaseCacheTests {
      */
     @Test
     public void testCacheUpdate() {
-        // Create the document
-        foo.testField = "old";
-        Response create = db.post(foo);
-        assertCachePut();
+        // Since this test updates an object (which is referenced locally in the cache) we need to
+        // perform the update using a separate object, not modifying the original object.
 
-        // Store the rev for update
+        // Create the document in the DB from foo and assert it is present in the cache
+        Foo createdFoo = new Foo(foo._id);
+        Response create = db.post(createdFoo);
+        assertCachePut(createdFoo);
+
+        // Store the rev for the update
         foo._rev = create.getRev();
 
         // Do an update
         foo.testField = "new";
         db.update(foo);
 
+        // Assert that the object in the cache is foo, not the original createdFoo
         assertCachePut();
     }
 
@@ -216,18 +224,22 @@ public class DatabaseCacheTests {
      */
     @Test
     public void testCacheUpdateWithQuorum() {
-        // Create the document
-        foo.testField = "old";
-        Response create = db.post(foo);
-        assertCachePut();
+        // Since this test updates an object (which is referenced locally in the cache) we need to
+        // perform the update using a separate object, not modifying the original object.
 
-        // Store the rev for update
+        // Create the document in the DB from foo and assert it is present in the cache
+        Foo createdFoo = new Foo(foo._id);
+        Response create = db.post(createdFoo);
+        assertCachePut(createdFoo);
+
+        // Store the rev for the update
         foo._rev = create.getRev();
 
         // Do an update
         foo.testField = "new";
         db.update(foo, 1);
 
+        // Assert that the object in the cache is foo, not the original createdFoo
         assertCachePut();
     }
 
@@ -239,22 +251,108 @@ public class DatabaseCacheTests {
         // To remove the document it needs to exist in the DB; so post first
         Response r = db.post(foo);
         // Assert that the entry was cached
-        assertEquals("The cache should contain 1 entry", 1, cache.size());
+        assertCacheSize(1);
         // To remove we need a rev, so set it based on the response
         foo._rev = r.getRev();
         // Now call db.remove
         db.remove(foo);
         // Assert that the cache is now empty
-        assertEquals("The cache should be empty", 0, cache.size());
+        assertCacheSize(0);
+    }
+
+    /**
+     * Test that the db bulk operation successfully adds multiple entries to the cache
+     */
+    @Test
+    public void testBulkCachePut() {
+        List<Foo> foosToSave = generateFoos(10);
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries and they are correct
+        assertCacheSize(10);
+        foosToSave.forEach(this::assertCachePut);
+    }
+
+    /**
+     * Test that the db bulk operation can update as well as create
+     */
+    @Test
+    public void testBulkCachePutWithUpdate() {
+        // Similarly to testCacheUpdate we need to update with a different object than the one we
+        // use to create to make sure we don't assert against an instance we modified directly in
+        // the cache.
+
+        List<Foo> foosToSave = generateFoos(10);
+
+        // Save the first entry individually
+        Foo createdFoo1 = new Foo(foosToSave.get(0)._id);
+        Response create = db.save(createdFoo1);
+        assertCacheSize(1);
+        assertCachePut(createdFoo1);
+
+        // Now update 1 and do a bulk operation
+        foosToSave.get(0)._rev = create.getRev();
+        foosToSave.get(0).testField = "updated";
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries and they are correct
+        assertCacheSize(10);
+        foosToSave.forEach(this::assertCachePut);
+    }
+
+    /**
+     * Test that the db bulk operation only adds successful items to the cache
+     */
+    @Test
+    public void testBulkCachePutWithError() {
+        List<Foo> foosToSave = generateFoos(10);
+
+        // Create the first entry individually, using the same ID as the first of our bulk entries
+        Foo createdFoo1 = new Foo(foosToSave.get(0)._id);
+        db.save(createdFoo1);
+        assertCacheSize(1);
+        assertCachePut(createdFoo1);
+
+        // Now update 1 and give it a bad revision to cause the update to fail
+        foosToSave.get(0).testField = "updated";
+        foosToSave.get(0)._rev = "1-madeuprev";
+        // Do the bulk operation
+        db.bulk(foosToSave);
+
+        // Assert that there are 10 entries
+        assertEquals("The cache should contain 10 entries", 10, cache.size());
+
+        // Assert that foo1 was not updated in the cache because of the error
+        Foo foo1FromCache = (Foo) cache.get(createdFoo1._id);
+        assertNotEquals("The cached foo1 should not be the latest foo1", foosToSave.get(0), foo1FromCache);
+        assertNull("The testField should be null", foo1FromCache.testField);
     }
 
     /**
      * Assert that the cache contains a single entry and that it is the expected foo.
      */
     private void assertCachePut() {
-        assertEquals("The cache should contain 1 entry", 1, cache.size());
-        assertEquals("The object in the cache should match the one posted", foo, cache.get(foo
-                ._id));
+        assertCacheSize(1);
+        assertCachePut(foo);
+    }
+
+    /**
+     * Assert that the cache contains the expected foo.
+     *
+     * @param expectedFoo the object expected in the cache
+     */
+    private void assertCachePut(Foo expectedFoo) {
+        assertEquals("The object in the cache should match the one posted", expectedFoo, cache
+                .get(expectedFoo._id));
+    }
+
+    /**
+     * Assert that the cache size is equal to the expected size
+     *
+     * @param expectedSize the expected size of the cache
+     */
+    protected void assertCacheSize(int expectedSize) {
+        assertEquals("Cache size should be " + expectedSize, expectedSize, cache.size());
     }
 
     /**
@@ -273,6 +371,20 @@ public class DatabaseCacheTests {
      */
     private void assertCacheGet(Foo retrievedFoo) {
         assertEquals("The retrieved document should match", foo, retrievedFoo);
+    }
+
+    /**
+     * Generate some foos for testing.
+     *
+     * @param n the number of foos to generate
+     * @return the list of generated foos
+     */
+    private List<Foo> generateFoos(int n) {
+        List<Foo> foos = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            foos.add(new Foo(i + "-" + UUID.randomUUID().toString()));
+        }
+        return foos;
     }
 
     private static final class Foo {
