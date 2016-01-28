@@ -12,17 +12,17 @@
  * and limitations under the License.
  */
 
-group = 'com.cloudant'
-version = '0.1-SNAPSHOT'
-description = """A Java object cache for use with the java-cloudant client"""
-
-// If the version says "snapshot" anywhere assume it is not a release
-ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
-
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
+
+    group = 'com.cloudant'
+    version = '0.1-SNAPSHOT'
+    description = """A Java object cache for use with the java-cloudant client"""
+
+    // If the version says "snapshot" anywhere assume it is not a release
+    ext.isReleaseVersion = !version.toUpperCase(Locale.ENGLISH).contains("SNAPSHOT")
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -30,6 +30,10 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        //TODO remove reference to snapshot repo when we can use a released java-cloudant
+        maven {
+            url 'http://oss.sonatype.org/content/repositories/snapshots'
+        }
     }
 
     // Additional configurations for javadoc
@@ -131,26 +135,37 @@ subprojects {
         archives sourcesJar, javadocJar
     }
 
-//load signing and repository parameters from system properties
-    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile', 'ossrhUsername', 'ossrhPassword']
+    // Load signing parameters from system properties
+    ['signing.keyId', 'signing.password', 'signing.secretKeyRingFile']
             .each { propName ->
-        //set a property with the given name if the system property is set
-        //if the system property is not set then set the property to null if it isn't a signing one
-        if (System.properties.(propName.toString()) != null || !propName.startsWith("signing")) {
+        // Set a property with the given name if the system property is set
+        if (System.properties.(propName.toString()) != null) {
             ext.(propName.toString()) = System.properties.(propName.toString())
         }
     }
 
     signing {
-        //only apply signing when it is a release and is being published
+        // Only apply signing when it is a release and is being published
         required {
             isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives")
         }
-        //when signing, sign the archives
+        // When signing, sign the archives
         sign configurations.archives
     }
 
     uploadArchives {
+
+        ext.ossrhUsername = System.properties.ossrhUsername
+        ext.ossrhPassword = System.properties.ossrhPassword
+
+        doFirst {
+            // If the OSSRH credentials are not available, then fail the build
+            if (ossrhUsername == null || ossrhPassword == null) {
+                throw new GradleException('OSSRH credentials properties (ossrhUsername & ' +
+                        'ossrhPassword) are required to upload archives.')
+            }
+        }
+
         repositories {
             mavenDeployer {
 
@@ -201,21 +216,33 @@ subprojects {
     }
 
     apply plugin: 'findbugs'
-//findbugs
+    // Findbugs configuration
     findbugs {
         toolVersion = "3.0.1"
-        //the code base is pretty small so use max effort
+        // The code base is pretty small so use max effort
         effort = "max"
         // Report all bugs
         reportLevel = "low"
     }
 
     tasks.withType(FindBugs) {
-        //currently only one report type can be used toggle which with a property
+        // Currently only one report type can be used toggle which with a property
         boolean generateXML = Boolean.getBoolean("findbugs.xml.report")
         reports {
             xml.enabled = generateXML
             html.enabled = !generateXML
+        }
+    }
+
+    tasks.withType(Test) {
+        // Transfer all gradle System properties to the test JVM
+        systemProperties = System.getProperties()
+        // Configure test logging
+        testLogging {
+            // Get full exceptions for test failures
+            exceptionFormat = 'full'
+            // Log all tests, not just failures. Include test output.
+            events "passed", "skipped", "failed", "standardOut", "standardError"
         }
     }
 }

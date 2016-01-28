@@ -19,6 +19,7 @@ import static org.junit.Assert.assertNull;
 
 import com.cloudant.client.cache.Cache;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,6 +37,7 @@ import java.util.Map;
  * <P>
  * The tests use a cache of Integer values with String keys e.g. "key1" : 1
  * </P>
+ *
  * @param <T> the type of the cache implementation to be specified by the subclass.
  * @author ArunIyengar
  */
@@ -50,6 +52,11 @@ public abstract class CacheTests<T extends Cache<String, Integer>> {
     @Before
     public void setupCache() {
         cache = getNewCacheInstance();
+    }
+
+    @After
+    public void clearCache() {
+        cache.clear();
     }
 
     protected String key1 = "key1";
