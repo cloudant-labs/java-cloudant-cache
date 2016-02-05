@@ -161,11 +161,19 @@ public class DatabaseCacheTests {
         assertEquals("The retrieved foo should match the expected", foo, retrievedFoo);
         assertEquals("The cache should contain foo with uri as key", foo, cache.get(docUri));
 
-        // Remove the connection to the database so we can only use the cache
-        Database cacheOnly = new DatabaseCache(null, cache);
-        // This will fail if the entry is not in the cache, because there is no database
-        retrievedFoo = cacheOnly.findAny(Foo.class, docUri);
-        assertEquals("The retrieved foo should match the expected", foo, retrievedFoo);
+        // The first call to findAny will retrieve from database and insert into cache.
+        // Now assert that we get the entry from the cache on a subsequent call.
+        // Creates a new DatabaseCache pointing to an empty DB behind the cache so if we don't
+        // get from the cache it will fail.
+        String emptyDbName = dbName + "emptydb";
+        try {
+            Database emptyDb = client.database(emptyDbName, true);
+            Database cacheOnly = new DatabaseCache(emptyDb, cache);
+            retrievedFoo = (Foo) cacheOnly.findAny(Foo.class, docUri);
+            assertEquals("The retrieved foo should match the expected", foo, retrievedFoo);
+        } finally {
+            client.deleteDB(emptyDbName);
+        }
     }
 
     /**
