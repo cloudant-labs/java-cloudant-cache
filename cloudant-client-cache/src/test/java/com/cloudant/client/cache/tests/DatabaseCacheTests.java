@@ -34,10 +34,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class provides tests for the DatabaseCache, validating that the cache can operate
@@ -46,6 +48,15 @@ import java.util.UUID;
 public class DatabaseCacheTests {
 
     // Class resources
+    /**
+     * The maximum size of the cache, we only need 10 entries for the tests.
+     */
+    protected static final int CACHE_SIZE = 10;
+    /**
+     * The default cache lifetime for an CacheWithLifetimes based caches. This time needs to be
+     * longer than any of the individual tests, 1 minute should be more than enough.
+     */
+    protected static final long CACHE_LIFETIME = TimeUnit.MINUTES.toMillis(1);
     private static CloudantClient client;
 
     // Test instance resources
@@ -88,10 +99,19 @@ public class DatabaseCacheTests {
      */
     @Before
     public void setupForTest() {
-        cache = new LRUCache<>(10);
+        cache = getNewCacheInstance();
         dbName = "database-cache-tests-" + UUID.randomUUID().toString();
         db = new DatabaseCache(client.database(dbName, true), cache);
         foo = new Foo(UUID.randomUUID().toString());
+    }
+
+    protected Cache<String, Object> getNewCacheInstance() {
+        return new LRUCache<>(CACHE_SIZE);
+    }
+
+    @After
+    public void clearCache() {
+        cache.clear();
     }
 
     @After
@@ -324,7 +344,8 @@ public class DatabaseCacheTests {
 
         // Assert that foo1 was not updated in the cache because of the error
         Foo foo1FromCache = (Foo) cache.get(createdFoo1._id);
-        assertNotEquals("The cached foo1 should not be the latest foo1", foosToSave.get(0), foo1FromCache);
+        assertNotEquals("The cached foo1 should not be the latest foo1", foosToSave.get(0),
+                foo1FromCache);
         assertNull("The testField should be null", foo1FromCache.testField);
     }
 
@@ -387,7 +408,10 @@ public class DatabaseCacheTests {
         return foos;
     }
 
-    private static final class Foo {
+    private static final class Foo implements Serializable {
+
+        static final long serialVersionUID = 1l;
+
         String _id;
         String _rev;
         String testField;
