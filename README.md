@@ -16,21 +16,21 @@ Add a dependency on one of the three artifacts produced by the project. The choi
 
 
 * Cache: **cloudant-client-cache**. Provides all the cache interfaces and utility functions as well
-as a very simple LRU `Cache` implementation.
+as a very simple LRU `com.cloudant.client.cache.Cache` implementation.
 ```groovy
 dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache', version: 'latest.release'
 }
 ```
 * In-process cache: **cloudant-client-cache-in-process** (depends on cloudant-client-cache). Provides a
-`CacheWithLifetimes` implementation that runs in-process.
+`com.cloudant.client.cache.CacheWithLifetimes` implementation that runs in-process.
 ```groovy
 dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-in-process', version: 'latest.release'
 }
 ```
 * Redis cache: **cloudant-client-cache-redis** (depends on cloudant-client-cache). Provides a
-`CacheWithLifetimes` implementation that uses a Redis instance as the store.
+`com.cloudant.client.cache.CacheWithLifetimes` implementation that uses a Redis instance as the store.
 ```groovy
 dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-redis', version: 'latest.release'
@@ -39,23 +39,28 @@ dependencies {
 
 ### Instantiate a cache
 
-* `LRUCache`:
+* `com.cloudant.client.cache.LRUCache`:
 ```java
 // Example with a maximum capacity of 100 objects
 Cache<String, Object> cache = new LRUCache<>(100);
 ```
-* `InProcessCache`:
+* `com.cloudant.client.cache.inprocess.InProcessCache`:
 ```java
 // Example with up to 100 objects with a default 1 minute lifetime:
 CacheWithLifetimes<String, Object> cache = new InProcessCache<>(100, 60000);
 ```
-* `RedisCache`:
+* `com.cloudant.client.cache.redis.RedisCache`:
 ```java
 // Example with a default 1 minute lifetime, connected to a local Redis instance:
 CacheWithLifetimes<String, Object> cache = new RedisCache<>("localhost", 60000);
 ```
 
-### Configure the cache with your `Database` instance
+### Configure the cache with your `com.cloudant.client.api.Database` instance
+
+The `com.cloudant.client.cache.DatabaseCache` and
+`com.cloudant.client.cache.DatabaseCacheWithLifetimes` classes extend the
+java-cloudant `com.cloudant.client.api.Database` so an existing application can
+add cache functionality with minimal code changes.
 
 ```java
 // Get the Cloudant client instance and database object.
@@ -63,8 +68,6 @@ CloudantClient client = ClientBuilder.account("example").build();
 Database db = client.database("example-database", false);
 
 // Create a new DatabaseCache with the database and cache instances.
-// The `DatabaseCache` and `DatabaseCacheWithLifetimes` classes implement the java-cloudant Database
-// interface so an existing application can add a local cache with minimal code changes.
 Database cachedDb = new DatabaseCache(db, cache);
 // Use this cachedDb instance in place of your normal db instance to utilise the cache.
 // Keep references to both instances to switch between cached and un-cached access to the database.
