@@ -30,10 +30,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        //TODO remove reference to snapshot repo when we can use a released java-cloudant
-        maven {
-            url 'http://oss.sonatype.org/content/repositories/snapshots'
-        }
     }
 
     // Additional configurations for javadoc
@@ -48,7 +44,7 @@ subprojects {
 
     dependencies {
         // Cloudant client (java-cloudant) version
-        def javaCloudantVersion = '2.2.1-SNAPSHOT' //TODO change after java-cloudant release
+        def javaCloudantVersion = '2.3.0'
         // Dependency on java-cloudant
         compile group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion
         // Dependencies for inheriting javadoc and creating doc links
