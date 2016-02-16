@@ -23,27 +23,292 @@ There is no need to add a head/title as that is provided by Javadoc.
 <P>
     This project provides functionality for using a local cache for Cloudant databases with the
     java-cloudant cloudant-client.
+    By using client-side caching, data (that can be cached without violating consistency
+    constraints) can be served directly from the client, eliminating the need to fetch the data from
+    the server. This can considerably reduce the latency for data accesses.
 </P>
+
+<h1>Basics</h1>
 
 <P>
     Caches implement the {@link com.cloudant.client.cache.Cache} interface (or one of its
     sub-interfaces). An example implementation is given in
     {@link com.cloudant.client.cache.LRUCache}, but the
-    <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-in-process/">
+    <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-in-process/"
+       target="_blank">
         cloudant-client-cache-in-process</a> and
-    <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-redis/">
+    <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-redis/" target="_blank">
         cloudant-client-cache-redis</a> projects provide alternative implementations.
 </P>
 
 <P>
-    {@link com.cloudant.client.cache.DatabaseCache} and its sub-classes implement the java-cloudant
-    client's {@link com.cloudant.client.api.Database} interface, preferentially using the cache and
+    {@link com.cloudant.client.cache.DatabaseCache} and its sub-classes extend the java-cloudant
+    client's {@link com.cloudant.client.api.Database} class, preferentially using the cache and
     then delegating to the remote database.
 </P>
+<pre>
+    {@code
+    // Instantiate a cache, in this example an LRUCache with a maximum capacity of 100 objects
+    Cache<String, Object> cache = new LRUCache<>(100);
+
+    // Get the Cloudant client instance and database object for the desired database.
+    CloudantClient client = ClientBuilder.account("example").build();
+    Database db = client.database("example-database", false);
+
+    // Create a new DatabaseCache with the cache and your com.cloudant.client.api.Database
+    // instance.
+    Database cachedDb = new DatabaseCache(db, cache);
+    // Use this cachedDb instance in place of your normal db instance to utilise the cache.
+    // It may be worth keeping references to both the cached and un-cached instances if you want to
+    // switch between cached and un-cached access to the database.
+
+    // Example 1: Get document with ID "abcdef" from the cache if available, or from the database if
+    // not yet cached.
+    MyDocument abc = cachedDb.find(MyDocument.class, "abcdef");
+
+    // Example 2: Use the original Database instance, db, to get document "abcdef" direct from the
+    // remote database, bypassing the cache.
+    MyDocument abc = db.find(MyDocument.class, "abcdef");
+    }
+</pre>
 
 <P>
-    See the <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client/">java-cloudant client
-    javadoc</a> for more information about the client.
+    See the <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client/" target="_blank">
+    java-cloudant client javadoc</a> for more information about the client.
+</P>
+
+<h1>Cache types</h1>
+
+<UL>
+    <LI><b>In-process cache</b>
+
+        <P>
+            In-process caches store data within the process corresponding to the application. That
+            way, there is no interprocess communication required for storing the data. For these
+            implementations of in-process caches, Java objects can directly be cached. Data
+            serialization is not required. In order to reduce overhead when the object is cached,
+            the object (or a reference to it) can be stored directly in the cache. This means that
+            changes to the object from the application could affect changes to the cached object
+            itself. In order to prevent the value of a cached object from being modified by changes
+            to the object being made in the application, a copy of the object can be made before the
+            object is cached. This results in overhead for copying the object.
+        </P>
+        <UL>
+            <LI>Implementations</LI>
+            <UL>
+                <LI>{@link com.cloudant.client.cache.LRUCache}</LI>
+                <LI>
+                    <a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-in-process/"
+                       target="_blank">
+                        cloudant-client-cache-in-process</a></LI>
+            </UL>
+            <LI>Advantages</LI>
+            <UL>
+                <LI>Extremely fast</LI>
+                <LI>Cached objects do not have to be serialized</LI>
+            </UL>
+            <LI>Disadvantages</LI>
+            <UL>
+                <LI>Not shared by multiple clients</LI>
+            </UL>
+        </UL>
+    </LI>
+    <BR/>
+    <LI><b>Remote process cache</b>
+
+        <P>
+            In this approach, the cache runs in one or more separate processes from the application.
+            A remote process cache can run on a separate node from the application as well. There is
+            some overhead for communication with a remote process cache. In addition, data often has
+            to be serialized before being cached. However, remote process caches also have some
+            advantages over in-process caches. A remote process cache can be shared by multiple
+            clients, and this feature is often desirable. Remote process caches can often be scaled
+            across multiple processes and nodes to handle high request rates and increase
+            availability.
+        </P>
+        <UL>
+            <LI>Implementations</LI>
+            <UL>
+                <LI><a href="http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-redis/"
+                       target="_blank">
+                    cloudant-client-cache-redis</a> for use with a running <a
+                        href="http://redis.io" target="_blank">
+                    Redis</a> server
+                </LI>
+            </UL>
+            <LI>Advantages</LI>
+            <UL>
+                <LI>Multiple clients can share cache</LI>
+                <LI>Cache can scale to many processes</LI>
+            </UL>
+            <LI>Disadvantages</LI>
+            <UL>
+                <LI>Overhead of interprocess communication</LI>
+                <LI>Cached objects may need to be serialized</LI>
+            </UL>
+        </UL>
+    </LI>
+</UL>
+
+<h1>Guidance on document revisions</h1>
+
+<P>
+    The revision information from a cached object has the potential to be out-of-date or missing.
+    The reasons for this are set out at length below, but it is preceded by the short version.
+</P>
+
+<h2>TL;DR version</h2>
+
+<P>
+    At the simplest level the revision token ({@code _rev} field) on objects retrieved using
+    {@link com.cloudant.client.cache.DatabaseCache#find(java.lang.Class, java.lang.String)} may be
+    obsolete or non-existent because the server side object may have been updated or the object was
+    cached with no revision information.
+    To get a suitable revision token for an update or a delete it is generally better to use
+    {@link com.cloudant.client.api.Database#find(java.lang.Class, java.lang.String)} to bypass the
+    cache or perform a HTTP HEAD request to get the document revision, which is returned in the
+    {@code ETag} header field, without retrieving the entire document, for example:
+</P>
+<pre>
+    {@code
+    client.executeRequest(Http.HEAD(new URL(db.getDBUri().toString() + "/" + id)))
+            .getConnection().getHeaderField("ETag");
+    }
+</pre>
+
+<h2>Detailed version</h2>
+
+<P>
+    Object instances are added to the cache unmodified. This behaviour is consistent with the
+    <a href="http://static.javadoc.io/com.cloudant/cloudant-client/2.3.0/overview-summary.html#Document%20revisions"
+       target="_blank">behaviour of the java-cloudant client</a>, which does not modify objects
+    after a write to the database. Consequently an object instance created from the deserialization
+    of a document retrieved from the database will not be equal to the object instance that was
+    saved because the server has added a revision token.
+    It is the user's responsibility to retrieve and store the revision token when it is necessary
+    for the application, for example to perform an update or delete.
+    It is possible to set the retrieved revision token on a cached object reference to bring the
+    cached instance up-to-date with the server document at that point in time.
+</P>
+<P>
+    Here are some examples using the java-cloudant client alone or with the cache and the resulting
+    revision token expectations.
+</P>
+<pre>
+    {@code
+    // Using java-cloudant only.
+
+    // Create a new Foo with an _id, but no revision.
+    Foo f = new Foo();
+    // Save the foo in the Database.
+    Response response = db.save(f);
+
+    // This example assumes no further changes have been made to the database document.
+    // Sometime later get the Foo from the database.
+    Foo f2 = db.find(response.getId()); // Returns deserialized document from the database.
+
+    f2.getRev().equals(response.getRev()); // True, f2 was deserialized from the database document
+    f2.equals(f); // False, f has not been modified by the database write and has no revision set
+
+    // Set revision on f
+    f.setRev(response.getRev());
+    f2.equals(f); // True as now f has the same revision as f2
+    }
+</pre>
+<P>
+    When using a java-cloudant-cache the attempt to retrieve an object can return the original
+    object directly from the cache without deserializing a document from the database.
+    This results in a behaviour difference from using java-cloudant alone.
+</P>
+<pre>
+    {@code
+    // Using a java-cloudant-cache.
+
+    // Create a new Foo with an _id, but no revision.
+    Foo f = new Foo();
+    // Save the foo in the Database.
+    Response response = cachedDb.save(f);
+
+    // This example assumes no further changes have been made to the database document.
+    // Sometime later get the Foo from the cached database.
+    Foo f2 = cachedDb.find(response.getId()); // Returns the cached object.
+
+    f2.getRev().equals(response.getRev()); // False, f2 has no revision information
+    f2.equals(f); // True, neither f or f2 have a revision set (note f == f2 is also True)
+
+    // Set revision on f
+    f.setRev(response.getRev()); // Also updates the instance of f in the cache (and hence f2)
+    f2.equals(f); // True, as before because f == f2 and both objects now have revision information.
+    }
+</pre>
+<P>
+    This behaviour difference is well defined, but can be confusing, particularly if using a cache
+    with lifetimes that may purge expired objects from the cache. Consider this scenario.
+</P>
+<pre>
+    {@code
+    // Using a java-cloudant-cache with lifetimes.
+
+    // Create a new Foo with an _id, but no revision.
+    Foo f = new Foo();
+    // Save the foo in the Database.
+    Response response = lifetimeCachedDb.save(f);
+
+    // This example assumes no further changes have been made to the database document.
+    // Sometime later get the Foo from the cached database.
+    Foo f2 = lifetimeCachedDb.find(response.getId()); // Returns the cached object.
+
+    f2.getRev().equals(response.getRev()); // False, f2 has no revision information
+    f2.equals(f); // True, neither f or f2 have a revision set (note f == f2 is also True)
+
+    // Wait a while longer, until object expires in cache
+    Foo f3 = lifetimeCachedDb.find(response.getId());
+    // Expired so cache miss and object f3 is now deserialized from remote document
+    f3.getRev().equals(response.getRev()); // True
+    f3.equals(f); // False, f has no revision set
+
+    // Note that the object returned from the same method call
+    // lifetimeCachedDb.find(response.getId()) has different behaviour at different times because of
+    // cache expiry.
+    }
+</pre>
+<P>
+    Setting the revision information after a write can to some extent provide more consistent
+    behaviour.
+</P>
+<pre>
+    {@code
+    // Using a java-cloudant-cache with lifetimes.
+
+    // Create a new Foo with an _id, but no revision.
+    Foo f = new Foo();
+    // Save the foo in the Database.
+    Response response = lifetimeCachedDb.save(f);
+    // Set the revision information
+    f.setRev(response.getRev());
+
+    // This example assumes no further changes have been made to the database document.
+    // Sometime later get the Foo from the cached database.
+    Foo f2 = lifetimeCachedDb.find(response.getId()); // Returns the cached object.
+
+    f2.getRev().equals(response.getRev()); // True
+    f2.equals(f); // True, f == f2
+
+    // Wait a while longer, until object expires in cache
+    Foo f3 = lifetimeCachedDb.find(response.getId());
+    // Expired so cache miss and object f3 is now deserialized from remote document
+    f3.getRev().equals(response.getRev()); // True
+    f3.equals(f); // True, f and f3 have the same revision information
+    }
+</pre>
+<P>
+    However, all of these examples have considered only cases where the server side document has not
+    changed. Depending on the application scenario documents on the server side might be updated
+    from other sources. Since providing the latest revision information is a requirement for a
+    successful update or delete operation some care must be taken. Generally an application should
+    have appropriate mechanisms in place to handle the potential
+    {@link com.cloudant.client.org.lightcouch.DocumentConflictException}s or to inspect the
+    {@code error} field of each {@link com.cloudant.client.api.model.Response} for bulk operations.
 </P>
 </body>
 </html>
