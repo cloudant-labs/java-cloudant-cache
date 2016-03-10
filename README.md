@@ -3,6 +3,8 @@
 A Java object cache for the [java-cloudant cloudant-client](https://github.com/cloudant/java-cloudant) and
  Cloudant databases.
 
+This library is unsupported.
+
 ## Usage
 
 The minimum supported runtime is Java 1.8.
