@@ -18,7 +18,7 @@ subprojects {
     apply plugin: 'signing'
 
     group = 'com.cloudant'
-    version = '0.1.1'
+    version = '0.1.2-SNAPSHOT'
     description = """A Java object cache for use with the java-cloudant client"""
 
     // If the version says "snapshot" anywhere assume it is not a release
