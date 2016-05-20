@@ -31,6 +31,7 @@ dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-in-process', version: 'latest.release'
 }
 ```
+In these examples, the cache will run in the same process as the application. 
 * Redis cache: **cloudant-client-cache-redis** (depends on cloudant-client-cache). Provides a
 `com.cloudant.client.cache.CacheWithLifetimes` implementation that uses a Redis instance as the store.
 ```groovy
@@ -38,7 +39,8 @@ dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-redis', version: 'latest.release'
 }
 ```
-
+In this example, Redis must be running in another process.  Information about Redis, including download information, is available from:
+http://redis.io/
 ### Instantiate a cache
 
 * `com.cloudant.client.cache.LRUCache`:
