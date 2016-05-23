@@ -31,6 +31,7 @@ dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-in-process', version: 'latest.release'
 }
 ```
+In these examples, the cache will run in the same process as the application. 
 * Redis cache: **cloudant-client-cache-redis** (depends on cloudant-client-cache). Provides a
 `com.cloudant.client.cache.CacheWithLifetimes` implementation that uses a Redis instance as the store.
 ```groovy
@@ -38,7 +39,8 @@ dependencies {
     compile group: 'com.cloudant', name: 'cloudant-client-cache-redis', version: 'latest.release'
 }
 ```
-
+In this example, Redis must be running in another process.  Information about Redis, including download information, is available from:
+http://redis.io/
 ### Instantiate a cache
 
 * `com.cloudant.client.cache.LRUCache`:
@@ -87,7 +89,15 @@ Database lifetimeCachedDb = new DatabaseCacheWithLifetimes(db, cache, 1, TimeUni
 // Wrap the same database and cache instances multiple times with different lifetimes to easily set
 // different lifetimes for different objects.
 ```
-
+### Directly accessing caches from an application program
+Caches can be directly accessed and modified using the methods of com.cloudant.client.cache.Cache and com.cloudant.client.cache.CacheWithLifetimes.  For example, the following method call adds "object1" with key “key1” to the cache. “lifetime” is the lifetime of the cached value in milliseconds:
+```java
+       cache.put(key1, object1, lifetime);
+``` 
+The following method call deletes the object indexed by "key2" from the cache if it exists:
+```java
+       cache.delete(key2);
+```
 ## Related documentation
 * [API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache/)
 * [In-process cache API reference (javadoc)](http://www.javadoc.io/doc/com.cloudant/cloudant-client-cache-in-process/)
