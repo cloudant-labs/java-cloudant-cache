@@ -257,7 +257,3 @@ def getProjectDocSources(project) {
     // Return without duplicates
     return dependentProjects.unique()
 }
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.10'
-}
