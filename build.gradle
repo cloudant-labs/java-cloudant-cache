@@ -44,7 +44,7 @@ subprojects {
 
     dependencies {
         // Cloudant client (java-cloudant) version
-        def javaCloudantVersion = '2.4.3'
+        def javaCloudantVersion = '2.5.0'
         // Dependency on java-cloudant
         compile group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion
         // Dependencies for inheriting javadoc and creating doc links
