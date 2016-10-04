@@ -1,3 +1,6 @@
+# 0.3.0 (2016-10-04)
+[UPGRADED] - java-cloudant dependency to version 2.6.2.
+
 # 0.2.0 (2016-06-27)
 [IMPROVED] - Updated java-cloudant dependency to version 2.5.0.
 
