@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 IBM Corp. All rights reserved.
+ * Copyright © 2016, 2017 IBM Corp. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of the License at
@@ -44,7 +44,7 @@ subprojects {
 
     dependencies {
         // Cloudant client (java-cloudant) version
-        def javaCloudantVersion = '2.6.2'
+        def javaCloudantVersion = '2.8.0'
         // Dependency on java-cloudant
         compile group: 'com.cloudant', name: 'cloudant-client', version: javaCloudantVersion
         // Dependencies for inheriting javadoc and creating doc links
