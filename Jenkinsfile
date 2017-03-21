@@ -58,11 +58,9 @@ stage('Publish') {
             if (isReleaseVersion) {
 
                 // Read the CHANGES.md to get the tag message
-                changes = """"""
-                changes += readFile('CHANGES.md')
-                tagMessage = """"""
-                for (line in changes.readLines()) {
-                    if (!"".equals(line)) {
+                tagMessage = ''
+                for (line in readFile('CHANGES.md').readLines()) {
+                    if (!''.equals(line)) {
                         // append the line to the tagMessage
                         tagMessage = "${tagMessage}${line}\n"
                     } else {
