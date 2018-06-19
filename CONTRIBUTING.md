@@ -95,8 +95,8 @@ The tests run as part of Travis CI when branches are pushed to the github reposi
 
 If you want to run the tests locally then note that some tests require additional services:
 * `DatabaseCacheTests` need an Apache CouchDB instance or Cloudant instance and if it
-is not at http://localhost:5789 you should set the system property `test.couch.url` with the correct
-url e.g. (http://your.example:1234).
+is not at `http://localhost:5789` you should set the system property `test.couch.url` with the correct
+url e.g. (`http://your.example:1234`).
 * `RedisCacheTests` require a running Redis instance on the default localhost:6379
 
 Run the tests using:
