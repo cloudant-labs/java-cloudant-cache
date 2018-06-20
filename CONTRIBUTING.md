@@ -1,10 +1,19 @@
-Contributing
-=======
+# Contributing
 
-The java-cloudant-cache project is written in Java and uses gradle as its build tool and the maven central
-repository for dependencies.
+## Issues
 
-## Developer Certificate of Origin
+Please [read these guidelines](http://ibm.biz/cdt-issue-guide) before opening an issue.
+If you still need to open an issue then we ask that you complete the template as
+fully as possible.
+
+## Pull requests
+
+We welcome pull requests, but ask contributors to keep in mind the following:
+
+* Only PRs with the template completed will be accepted
+* We will not accept PRs for user specific functionality
+
+### Developer Certificate of Origin
 
 In order for us to accept pull-requests, the contributor must sign-off a
 [Developer Certificate of Origin (DCO)](DCO1.1.txt). This clarifies the
@@ -17,28 +26,12 @@ Please read the agreement and acknowledge it by ticking the appropriate box in t
 
 - [x] Tick to sign-off your agreement to the Developer Certificate of Origin (DCO) 1.1
 
-## Requirements
+## General information
 
-- gradle
-- Java 1.8
+The java-cloudant-cache project is written in Java and uses gradle as its build tool and the maven central
+repository for dependencies.
 
-## Installing requirements
-
-### Java
-
-Follow the instructions for your platform.
-
-### Gradle
-
-The project uses the gradle wrapper to download  specified version of gradle.
-The gradle wrapper is run by using the following command:
-
-```bash
-$ ./gradlew
-```
-Note: on windows the command to run is gradlew.bat rather than gradlew
-
-## Coding guidelines
+### Coding guidelines
 
 The project uses the [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 with the following changes:
@@ -55,7 +48,7 @@ with the following changes:
     IDEA defaults to 8, which is okay too.
 ```
 
-### Code Style
+#### Code Style
 
 An IDEA code style matching these guidelines is included in the project,
 in the `.idea` folder.
@@ -67,7 +60,28 @@ If you already have the project, to enable the code style follow these steps:
 
 IDEA will then use the style when reformatting, refactoring and so on.
 
-## Building the library
+## Requirements
+
+- gradle
+- Java 1.8
+
+### Installing requirements
+
+#### Java
+
+Follow the instructions for your platform.
+
+#### Gradle
+
+The project uses the gradle wrapper to download  specified version of gradle.
+The gradle wrapper is run by using the following command:
+
+```bash
+$ ./gradlew
+```
+Note: on windows the command to run is gradlew.bat rather than gradlew
+
+## Building
 
 The project should build in a cloned repository with:
 
@@ -75,14 +89,14 @@ The project should build in a cloned repository with:
 $ ./gradlew assemble
 ```
 
-## Running the tests
+## Testing
 
 The tests run as part of Travis CI when branches are pushed to the github repository.
 
 If you want to run the tests locally then note that some tests require additional services:
 * `DatabaseCacheTests` need an Apache CouchDB instance or Cloudant instance and if it
-is not at http://localhost:5789 you should set the system property `test.couch.url` with the correct
-url e.g. (http://your.example:1234).
+is not at `http://localhost:5789` you should set the system property `test.couch.url` with the correct
+url e.g. (`http://your.example:1234`).
 * `RedisCacheTests` require a running Redis instance on the default localhost:6379
 
 Run the tests using:
