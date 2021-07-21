@@ -1,3 +1,6 @@
+# UNMAINTAINED (2021-07-21)
+- [DEPRECATED] This project is no longer maintained.
+
 # 0.4.0 (2017-03-22)
 - [UPGRADED] java-cloudant dependency to version 2.8.0.
 
